@@ -6,13 +6,11 @@ build-backend = "setuptools.build_meta"
 name = "PromptPrep"
 version = "0.1.0"
 description = "A code aggregator tool for consolidating code files into a single file with an ASCII directory tree."
-authors = [
-  { name = "Kartik Mandar", email = "kartik4321mandar@gmail.com" }
-]
+authors = [{ name = "Kartik Mandar", email = "kartik4321mandar@gmail.com" }]
 license = { file = "LICENSE" }
 readme = "README.md"
 requires-python = ">=3.7"
-dependencies = []
+dependencies = ["tqdm"]
 
 [project.scripts]
 promptprep = "promptprep.cli:main"

@@ -2,6 +2,7 @@ import os
 import subprocess
 import platform
 from typing import Optional, Set
+from tqdm import tqdm
 
 
 class DirectoryTreeGenerator:
@@ -125,24 +126,30 @@ class CodeAggregator:
     def aggregate_code(self) -> str:
         """Aggregates the directory tree and the content of programming-related files."""
         tree = self.tree_generator.generate(self.directory)
-        aggregated = f"Directory Tree:\n{tree}\n\n"
         
         # If directory doesn't exist, just return the tree (which will have the error message)
+        # Note: generate already raises FileNotFoundError, this check might be redundant
+        # but kept for safety unless refactored.
         if "Directory not found" in tree:  # pragma: no cover
-            return aggregated  # pragma: no cover
-            
+             # This part might not be reachable if generate raises FileNotFoundError
+             return f"Directory Tree:\n{tree}\n\n" # pragma: no cover
+
+        # --- Start: Count files for progress bar ---
+        files_to_process = []
         for root, dirs, files in os.walk(self.directory):
-            rel_path = os.path.relpath(root, self.directory)
-            if rel_path == ".":
-                rel_path = ""
-            # If any parent directory is excluded, skip this branch.
-            if any(part in self.exclude_dirs for part in (rel_path.split(os.sep) if rel_path else [])):
-                dirs[:] = []
-                continue
-            current_dir = os.path.basename(root) if rel_path else os.path.basename(self.directory.rstrip(os.sep)) or self.directory
+            # Apply directory exclusions early
+            rel_path_for_exclusion_check = os.path.relpath(root, self.directory)
+            if rel_path_for_exclusion_check == ".":
+                rel_path_for_exclusion_check = ""
+            
+            # Filter excluded directories
+            dirs[:] = [d for d in dirs if d not in self.exclude_dirs and 
+                       not any(part in self.exclude_dirs for part in os.path.join(rel_path_for_exclusion_check, d).split(os.sep))]
+
+            current_dir = os.path.basename(root)
             if current_dir in self.exclude_dirs:
-                dirs[:] = [] # pragma: no cover
-                continue # pragma: no cover
+                 continue # Skip files in the root of an excluded dir if os.walk yielded it before filtering dirs[:]
+
             for file in files:
                 if not self.is_programming_file(file):
                     continue
@@ -150,17 +157,27 @@ class CodeAggregator:
                 rel_file_path = os.path.relpath(file_path, self.directory)
                 if self.should_exclude(rel_file_path) or not self.should_include(file_path):
                     continue
-                header = (
-                    f"\n\n# ======================\n"
-                    f"# File: {rel_file_path}\n"
-                    f"# ======================\n\n"
-                )
-                aggregated += header
-                try:
-                    with open(file_path, "r", encoding="utf-8", errors='ignore') as f:
-                        aggregated += f.read()
-                except Exception as e:
-                    aggregated += f"\n# Error reading file {rel_file_path}: {e}\n"
+                files_to_process.append(file_path)
+        # --- End: Count files for progress bar ---
+
+        aggregated = f"Directory Tree:\n{tree}\n\n"
+        
+        # --- Start: Process files with progress bar ---
+        for file_path in tqdm(files_to_process, desc="Aggregating files", unit="file", leave=False):
+            rel_file_path = os.path.relpath(file_path, self.directory)
+            header = (
+                f"\n\n# ======================\n"
+                f"# File: {rel_file_path}\n"
+                f"# ======================\n\n"
+            )
+            aggregated += header
+            try:
+                with open(file_path, "r", encoding="utf-8", errors='ignore') as f:
+                    aggregated += f.read()
+            except Exception as e:
+                aggregated += f"\n# Error reading file {rel_file_path}: {e}\n"
+        # --- End: Process files with progress bar ---
+        
         return aggregated
 
     def write_to_file(self, content: Optional[str] = None, filename: Optional[str] = None) -> None:
