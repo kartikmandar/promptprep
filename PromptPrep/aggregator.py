@@ -157,7 +157,7 @@ class CodeAggregator:
                 )
                 aggregated += header
                 try:
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    with open(file_path, "r", encoding="utf-8", errors='ignore') as f:
                         aggregated += f.read()
                 except Exception as e:
                     aggregated += f"\n# Error reading file {rel_file_path}: {e}\n"
