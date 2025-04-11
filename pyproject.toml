@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "PromptPrep"
+version = "0.1.0"
+description = "A code aggregator tool for consolidating code files into a single file with an ASCII directory tree."
+authors = [
+  { name = "Kartik Mandar", email = "kartik4321mandar@gmail.com" }
+]
+license = { file = "LICENSE" }
+readme = "README.md"
+requires-python = ">=3.7"
+dependencies = []
+
+[project.scripts]
+promptprep = "promptprep.cli:main"
+
+[tool.black]
+line-length = 88
+target-version = ["py37"]
