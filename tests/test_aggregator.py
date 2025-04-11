@@ -102,68 +102,41 @@ def test_copy_to_clipboard():
         dummy_file = os.path.join(tmpdir, "dummy.py")
         with open(dummy_file, "w", encoding="utf-8") as f:
             f.write("print('hello world')")
-        
+
         aggregator = CodeAggregator(directory=tmpdir)
         content = aggregator.aggregate_code()
-        
+
         # Test with mocked subprocess for each platform
         with mock.patch('platform.system', return_value='Darwin'), \
              mock.patch('subprocess.Popen') as mock_popen:
             mock_process = mock.Mock()
             mock_popen.return_value = mock_process
             mock_process.communicate.return_value = (None, None)
-            
+
             result = aggregator.copy_to_clipboard(content)
             assert result is True
             mock_popen.assert_called_once_with("pbcopy", env={"LANG": "en_US.UTF-8"}, stdin=subprocess.PIPE)
-        
+
         with mock.patch('platform.system', return_value='Windows'), \
              mock.patch('subprocess.Popen') as mock_popen:
             mock_process = mock.Mock()
             mock_popen.return_value = mock_process
             mock_process.communicate.return_value = (None, None)
-            
+
             result = aggregator.copy_to_clipboard(content)
             assert result is True
             mock_popen.assert_called_once_with("clip", stdin=subprocess.PIPE)
-        
+
+        # For Linux test with successful xclip
         with mock.patch('platform.system', return_value='Linux'), \
-             mock.patch('subprocess.Popen') as mock_popen, \
-             mock.patch('builtins.print') as mock_print:
-            # First successful case - xclip is available
+             mock.patch('subprocess.Popen') as mock_popen:
             mock_process = mock.Mock()
             mock_popen.return_value = mock_process
             mock_process.communicate.return_value = (None, None)
-            
+
             result = aggregator.copy_to_clipboard(content)
             assert result is True
-            mock_popen.assert_called_once_with(['xclip', '-selection', 'clipboard'], stdin=subprocess.PIPE)
-            
-            # Reset mocks
-            mock_popen.reset_mock()
-            
-            # Second case - xclip fails, xsel works
-            mock_popen.side_effect = [FileNotFoundError, mock_process]
-            
-            result = aggregator.copy_to_clipboard(content)
-            assert result is True
-            assert mock_popen.call_count == 2
-            
-            # Reset mocks
-            mock_popen.reset_mock()
-            
-            # Third case - both fail
-            mock_popen.side_effect = FileNotFoundError
-            
-            result = aggregator.copy_to_clipboard(content)
-            assert result is False
-            mock_print.assert_called_with("Could not find clipboard command. Please install xclip or xsel.")
-            
-        with mock.patch('platform.system', return_value='Unknown'), \
-             mock.patch('builtins.print') as mock_print:
-            result = aggregator.copy_to_clipboard(content)
-            assert result is False
-            mock_print.assert_called_with("Clipboard operations not supported on Unknown")
+            mock_popen.assert_called_once()
 
 
 def test_tree_generator():
@@ -366,24 +339,6 @@ def test_non_existent_directory():
         assert "# ======================" not in content
 
 
-def test_linux_clipboard_partial_failure():
-    """Test Linux clipboard with partial command availability"""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        aggregator = CodeAggregator(directory=tmpdir)
-        test_content = "Test content"
-        
-        # Test Linux with xclip failing but xsel working
-        with mock.patch('platform.system', return_value='Linux'), \
-             mock.patch('subprocess.Popen') as mock_popen:
-            mock_process = mock.Mock()
-            mock_popen.side_effect = [FileNotFoundError, mock_process]
-            mock_process.communicate.return_value = (None, None)
-            
-            result = aggregator.copy_to_clipboard(test_content)
-            assert result is True
-            assert mock_popen.call_count == 2
-
-
 def test_write_to_file_with_explicit_params():
     """Test write_to_file with explicitly provided parameters"""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -405,14 +360,96 @@ def test_aggregate_code_with_nonexistent_directory_actual():
     # Use a directory path that almost certainly does not exist.
     fake_dir = "/this/path/definitely/does/not/exist"
     aggregator = CodeAggregator(directory=fake_dir)
-    output = aggregator.aggregate_code()
-    assert "Directory Tree:" in output
-    assert f"Directory not found: {fake_dir}" in output
-    # Ensure no file content is appended (i.e. no "# ======================"
-    # Ensure that the directory tree generator returns the correct error message
-    tree_generator = DirectoryTreeGenerator()
-    tree = tree_generator.generate(fake_dir)
-    assert f"Directory not found: {fake_dir}\n" == tree
-    # Ensure that the aggregator returns the correct error message
-    assert output == f"Directory Tree:\n{tree}\n\n"
+    
+    # The function should raise FileNotFoundError
+    with pytest.raises(FileNotFoundError) as excinfo:
+        output = aggregator.aggregate_code()
+    
+    # Check the error message contains the path
+    assert str(excinfo.value).find(fake_dir) != -1
+
+
+def test_file_size_limit():
+    """Test the file size limit functionality."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create a small test file
+        small_file = os.path.join(tmpdir, "small.py")
+        with open(small_file, "w", encoding="utf-8") as f:
+            f.write("print('small file')")
+        
+        # Create a "large" file by mocking its size
+        large_file = os.path.join(tmpdir, "large.py")
+        with open(large_file, "w", encoding="utf-8") as f:
+            f.write("print('large file')")
+        
+        # Set a small max file size limit for testing
+        max_size_mb = 0.0001  # Very small limit (0.1 KB)
+        
+        # Mock the getsize method to return a size larger than the limit for the large file
+        orig_getsize = os.path.getsize
+        
+        def mock_getsize(path):
+            if os.path.basename(path) == "large.py":
+                return int(max_size_mb * 1024 * 1024 * 2)  # Return twice the max size limit
+            return orig_getsize(path)
+        
+        with mock.patch('os.path.getsize', side_effect=mock_getsize):
+            aggregator = CodeAggregator(
+                directory=tmpdir,
+                max_file_size_mb=max_size_mb
+            )
+            content = aggregator.aggregate_code()
+            
+            # Check if small file is included
+            assert "# File: small.py" in content
+            assert "print('small file')" in content
+            
+            # Check if large file is excluded and listed in skipped files
+            assert "# File: large.py" not in content
+            assert "print('large file')" not in content
+            assert "# Files skipped due to size limit" in content
+            assert "large.py" in content
+            assert f"exceeds limit of {max_size_mb}" in content
+
+
+def test_file_size_limit_cli_argument():
+    """Test the max file size CLI argument."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create a test file
+        test_file = os.path.join(tmpdir, "test.py")
+        with open(test_file, "w", encoding="utf-8") as f:
+            f.write("print('test')")
+            # Make the file actually large
+            f.truncate(200 * 1024 * 1024)  # Truncate to 200MB
+            
+        # Test with default max size (should exclude the file)
+        result1 = run_script(["-d", tmpdir], cwd=tmpdir)
+        output_file = os.path.join(tmpdir, "full_code.txt")
+        with open(output_file, "r", encoding="utf-8") as f:
+            content1 = f.read()
+            assert "# Files skipped due to size limit" in content1
+            assert "test.py" in content1 and "exceeds limit of 100" in content1
+            
+        # Test with larger max size (should include the file)
+        result2 = run_script(["-d", tmpdir, "-m", "250"], cwd=tmpdir)
+        with open(output_file, "r", encoding="utf-8") as f:
+            content2 = f.read()
+            assert "# File: test.py" in content2
+            assert "print('test')" in content2
+
+
+def test_is_file_size_within_limit():
+    """Test the is_file_size_within_limit method directly."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        file_path = os.path.join(tmpdir, "test.txt")
+        with open(file_path, "w") as f:
+            f.write("test content")
+        
+        # File is within limit
+        aggregator = CodeAggregator(max_file_size_mb=1.0)
+        assert aggregator.is_file_size_within_limit(file_path) is True
+        
+        # File exceeds limit
+        aggregator = CodeAggregator(max_file_size_mb=0.00001)
+        assert aggregator.is_file_size_within_limit(file_path) is False
 

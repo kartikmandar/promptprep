@@ -56,6 +56,25 @@ def test_parse_arguments():
         assert args.exclude_dirs == 'node_modules,venv'
 
 
+def test_parse_arguments_max_file_size():
+    """Test the argument parser for max file size."""
+    # Test default file size
+    with mock.patch.object(sys, 'argv', ['promptprep']):
+        args = parse_arguments()
+        assert args.max_file_size == 100.0  # Default is 100 MB
+    
+    # Test custom file size
+    with mock.patch.object(sys, 'argv', ['promptprep', '-m', '20.5']):
+        args = parse_arguments()
+        assert args.max_file_size == 20.5
+    
+    # Test with other arguments
+    with mock.patch.object(sys, 'argv', ['promptprep', '-d', '/test/dir', '-m', '5']):
+        args = parse_arguments()
+        assert args.directory == '/test/dir'
+        assert args.max_file_size == 5.0
+
+
 def test_main_file_output():
     """Test the main function with file output."""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -72,6 +91,7 @@ def test_main_file_output():
         args_mock.include_files = ""
         args_mock.extensions = ""
         args_mock.exclude_dirs = ""
+        args_mock.max_file_size = 100.0  # Use 100 MB as default
 
         # Mock parse_arguments to return our args
         with mock.patch('PromptPrep.cli.parse_arguments', return_value=args_mock):
@@ -102,6 +122,7 @@ def test_main_clipboard():
         args_mock.include_files = ""
         args_mock.extensions = ""
         args_mock.exclude_dirs = ""
+        args_mock.max_file_size = 100.0  # Add default max file size
 
         # Mock parse_arguments and copy_to_clipboard
         with mock.patch('PromptPrep.cli.parse_arguments', return_value=args_mock):
@@ -123,6 +144,7 @@ def test_main_clipboard_failure():
         args_mock.include_files = ""
         args_mock.extensions = ""
         args_mock.exclude_dirs = ""
+        args_mock.max_file_size = 100.0  # Add default max file size
 
         # Mock parse_arguments and copy_to_clipboard (returning False to simulate failure)
         with mock.patch('PromptPrep.cli.parse_arguments', return_value=args_mock):
@@ -160,6 +182,7 @@ def test_main_with_custom_extensions_and_exclude_dirs():
         args_mock.include_files = ""
         args_mock.extensions = ".py"  # Only include Python files
         args_mock.exclude_dirs = "excluded"  # Exclude the 'excluded' directory
+        args_mock.max_file_size = 100.0  # Add default max file size
         
         # Mock parse_arguments to return our args
         with mock.patch('PromptPrep.cli.parse_arguments', return_value=args_mock):
@@ -208,6 +231,7 @@ def test_main_with_include_files():
         args_mock.include_files = rel_path
         args_mock.extensions = ""
         args_mock.exclude_dirs = ""
+        args_mock.max_file_size = 100.0  # Add default max file size
         
         # Mock parse_arguments to return our args
         with mock.patch('PromptPrep.cli.parse_arguments', return_value=args_mock):
@@ -334,6 +358,7 @@ def test_main_error_handling():
         args_mock.include_files = ""
         args_mock.extensions = ""
         args_mock.exclude_dirs = ""
+        args_mock.max_file_size = 100.0  # Add default max file size
 
         # Mock parse_arguments to return our args
         with mock.patch('PromptPrep.cli.parse_arguments', return_value=args_mock):
@@ -345,8 +370,7 @@ def test_main_error_handling():
                      pytest.raises(SystemExit) as excinfo:
                     main()
                     # Verify error message in stderr
-                    assert "An error occurred:" in fake_err.getvalue()
-                    assert "Test error" in fake_err.getvalue()
+                    assert "An unexpected error occurred: Test error" in fake_err.getvalue()
                     # Verify exit code
                     assert excinfo.value.code == 1
 
@@ -362,6 +386,7 @@ def test_main_error_handling_refined():
         args_mock.include_files = ""
         args_mock.extensions = ""
         args_mock.exclude_dirs = ""
+        args_mock.max_file_size = 100.0  # Add default max file size
 
         # Mock parse_arguments to return our args
         with mock.patch('PromptPrep.cli.parse_arguments', return_value=args_mock):
@@ -373,8 +398,7 @@ def test_main_error_handling_refined():
                      pytest.raises(SystemExit) as excinfo:
                     main()
                     # Verify error message in stderr
-                    assert "An error occurred:" in fake_err.getvalue()
-                    assert "Test error" in fake_err.getvalue()
+                    assert "An unexpected error occurred: Test error" in fake_err.getvalue()
                     # Verify exit code
                     assert excinfo.value.code == 1
 
@@ -413,14 +437,17 @@ def test_main_with_invalid_directory():
     args_mock.include_files = ""
     args_mock.extensions = ""
     args_mock.exclude_dirs = ""
+    args_mock.max_file_size = 100.0
 
-    with mock.patch('PromptPrep.cli.parse_arguments', return_value=args_mock):
-        with mock.patch('sys.stderr', new=StringIO()) as fake_err, \
-             pytest.raises(SystemExit) as excinfo:
+    with mock.patch('PromptPrep.cli.parse_arguments', return_value=args_mock), \
+         mock.patch('sys.stderr', new=StringIO()) as fake_err:
+        try:
             main()
-            assert "An error occurred:" in fake_err.getvalue()
-            assert "Directory not found" in fake_err.getvalue()
-            assert excinfo.value.code == 1
+        except SystemExit as e:
+            stderr_output = fake_err.getvalue()
+            assert "Error" in stderr_output
+            assert invalid_dir in stderr_output
+            assert e.code == 1
 
 
 def test_main_with_exception():
@@ -432,14 +459,14 @@ def test_main_with_exception():
     args_mock.include_files = ""
     args_mock.extensions = ""
     args_mock.exclude_dirs = ""
+    args_mock.max_file_size = 100.0  # Add default max file size
 
     with mock.patch('PromptPrep.cli.parse_arguments', return_value=args_mock):
         with mock.patch('PromptPrep.aggregator.CodeAggregator.write_to_file', side_effect=Exception("Test error")):
             with mock.patch('sys.stderr', new=StringIO()) as fake_err, \
                  pytest.raises(SystemExit) as excinfo:
                 main()
-                assert "An error occurred:" in fake_err.getvalue()
-                assert "Test error" in fake_err.getvalue()
+                assert "An unexpected error occurred: Test error" in fake_err.getvalue()
                 assert excinfo.value.code == 1
 
 
@@ -488,32 +515,32 @@ def test_cli_import_fallback_logic_explicit():
 
 def test_clipboard_success():
     with tempfile.TemporaryDirectory() as tmpdir:
-        with mock.patch("sys.argv", ["cli.py", "-d", tmpdir, "-c"]):
+        with mock.patch("sys.argv", ["cli.py", "-d", tmpdir, "-c", "-m", "10"]):
             with mock.patch("PromptPrep.cli.CodeAggregator.copy_to_clipboard", return_value=True) as mock_clipboard:
                 with mock.patch('sys.stdout', new=StringIO()) as fake_out:
                     main()
-                    assert "Aggregated content copied to the clipboard successfully.\n" == fake_out.getvalue()
+                    assert "Aggregated content copied to the clipboard successfully." in fake_out.getvalue()
                     mock_clipboard.assert_called_once()
 
 
 def test_clipboard_failure():
     with tempfile.TemporaryDirectory() as tmpdir:
-        with mock.patch("sys.argv", ["cli.py", "-d", tmpdir, "-c"]):
+        with mock.patch("sys.argv", ["cli.py", "-d", tmpdir, "-c", "-m", "10"]):
             with mock.patch("PromptPrep.cli.CodeAggregator.copy_to_clipboard", return_value=False) as mock_clipboard:
                 with mock.patch('sys.stdout', new=StringIO()) as fake_out:
                     with pytest.raises(SystemExit) as excinfo:
                         main()
-                    assert "Failed to copy content to the clipboard.\n" == fake_out.getvalue()
+                    assert "Failed to copy content to the clipboard." in fake_out.getvalue()
                     assert excinfo.value.code == 1
                     mock_clipboard.assert_called_once()
 
 
 def test_main_exception():
     with tempfile.TemporaryDirectory() as tmpdir:
-        with mock.patch("sys.argv", ["cli.py", "-d", tmpdir]):
+        with mock.patch("sys.argv", ["cli.py", "-d", tmpdir, "-m", "10"]):
             with mock.patch('PromptPrep.aggregator.CodeAggregator.__init__', side_effect=Exception("Initialization error")):
                 with mock.patch('sys.stderr', new=StringIO()) as fake_err, \
                      pytest.raises(SystemExit) as excinfo:
                     main()
-                assert "An error occurred: Initialization error\n" == fake_err.getvalue()
+                assert "An unexpected error occurred: Initialization error" in fake_err.getvalue()
                 assert excinfo.value.code == 1

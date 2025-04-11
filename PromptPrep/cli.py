@@ -48,6 +48,13 @@ def parse_arguments() -> argparse.Namespace:
         default="",
         help="Comma-separated list of directories to exclude. Replaces the default set if provided."
     )
+    parser.add_argument(
+        "-m",
+        "--max-file-size",
+        type=float,
+        default=100.0,
+        help="Maximum file size in MB to include. Files larger than this will be skipped. Defaults to 100 MB."
+    )
     return parser.parse_args()
 
 
@@ -63,7 +70,8 @@ def main() -> None:
             output_file=args.output_file,
             include_files=include_files,
             programming_extensions=programming_extensions if programming_extensions else None,
-            exclude_dirs=exclude_dirs if exclude_dirs else None
+            exclude_dirs=exclude_dirs if exclude_dirs else None,
+            max_file_size_mb=args.max_file_size
         )
 
         if args.clipboard:

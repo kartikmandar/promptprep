@@ -85,6 +85,8 @@ class CodeAggregator:
     DEFAULT_EXCLUDE_DIRS = {
         "venv", "node_modules", "__pycache__", ".git", "dist", "build", "temp", "old_files", "flask_session"
     }
+    # Default file size limit: 100 MB
+    DEFAULT_MAX_FILE_SIZE_MB = 100.0
 
     def __init__(
         self,
@@ -94,6 +96,7 @@ class CodeAggregator:
         programming_extensions: Optional[Set[str]] = None,
         exclude_dirs: Optional[Set[str]] = None,
         exclude_files: Optional[Set[str]] = None,
+        max_file_size_mb: Optional[float] = None,
     ):
         self.directory = directory or os.getcwd()
         self.output_file = output_file
@@ -101,6 +104,7 @@ class CodeAggregator:
         self.programming_extensions = programming_extensions or self.DEFAULT_PROGRAMMING_EXTENSIONS
         self.exclude_dirs = exclude_dirs or self.DEFAULT_EXCLUDE_DIRS
         self.exclude_files = exclude_files or self.DEFAULT_EXCLUDE_FILES
+        self.max_file_size_mb = max_file_size_mb or self.DEFAULT_MAX_FILE_SIZE_MB
         self.tree_generator = DirectoryTreeGenerator(self.exclude_dirs, self.include_files, self.exclude_files, self.programming_extensions)
 
     def is_programming_file(self, filename: str) -> bool:
@@ -123,6 +127,12 @@ class CodeAggregator:
         rel_file_path = os.path.relpath(file_path, self.directory)
         return rel_file_path in self.include_files
 
+    def is_file_size_within_limit(self, file_path: str) -> bool:
+        """Check if the file size is within the configured limit."""
+        file_size_bytes = os.path.getsize(file_path)
+        file_size_mb = file_size_bytes / (1024 * 1024)  # Convert to MB
+        return file_size_mb <= self.max_file_size_mb
+
     def aggregate_code(self) -> str:
         """Aggregates the directory tree and the content of programming-related files."""
         tree = self.tree_generator.generate(self.directory)
@@ -136,6 +146,7 @@ class CodeAggregator:
 
         # --- Start: Count files for progress bar ---
         files_to_process = []
+        skipped_files = []
         for root, dirs, files in os.walk(self.directory):
             # Apply directory exclusions early
             rel_path_for_exclusion_check = os.path.relpath(root, self.directory)
@@ -157,6 +168,12 @@ class CodeAggregator:
                 rel_file_path = os.path.relpath(file_path, self.directory)
                 if self.should_exclude(rel_file_path) or not self.should_include(file_path):
                     continue
+                
+                # Check if file size is within limit
+                if not self.is_file_size_within_limit(file_path):
+                    skipped_files.append((rel_file_path, os.path.getsize(file_path) / (1024 * 1024)))
+                    continue
+                    
                 files_to_process.append(file_path)
         # --- End: Count files for progress bar ---
 
@@ -177,6 +194,14 @@ class CodeAggregator:
             except Exception as e:
                 aggregated += f"\n# Error reading file {rel_file_path}: {e}\n"
         # --- End: Process files with progress bar ---
+        
+        # Add information about skipped files due to size limit
+        if skipped_files:
+            aggregated += "\n\n# ======================\n"
+            aggregated += "# Files skipped due to size limit\n"
+            aggregated += "# ======================\n\n"
+            for file_path, size_mb in skipped_files:
+                aggregated += f"# {file_path} ({size_mb:.2f} MB - exceeds limit of {self.max_file_size_mb} MB)\n"
         
         return aggregated
 
