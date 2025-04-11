@@ -10,7 +10,7 @@ authors = [{ name = "Kartik Mandar", email = "kartik4321mandar@gmail.com" }]
 license = { file = "LICENSE" }
 readme = "README.md"
 requires-python = ">=3.7"
-dependencies = ["tqdm"]
+dependencies = ["tqdm", "tiktoken"]
 
 [project.scripts]
 promptprep = "promptprep.cli:main"

@@ -55,6 +55,39 @@ def parse_arguments() -> argparse.Namespace:
         default=100.0,
         help="Maximum file size in MB to include. Files larger than this will be skipped. Defaults to 100 MB."
     )
+    parser.add_argument(
+        "--summary-mode",
+        action="store_true",
+        help="Include only function/class declarations and docstrings."
+    )
+    parser.add_argument(
+        "--include-comments",
+        action="store_true",
+        default=True,
+        help="Include comments in the aggregated output. Defaults to True."
+    )
+    parser.add_argument(
+        "--no-include-comments",
+        dest="include_comments",
+        action="store_false",
+        help="Exclude comments from the aggregated output."
+    )
+    parser.add_argument(
+        "--metadata",
+        action="store_true",
+        help="Collect and append codebase metadata (LOC, comment ratio, etc.)."
+    )
+    parser.add_argument(
+        "--count-tokens",
+        action="store_true",
+        help="Count tokens in the output file and include in metadata."
+    )
+    parser.add_argument(
+        "--token-model",
+        type=str,
+        default="cl100k_base",
+        help="The tokenizer model to use for counting tokens. Common options: cl100k_base (for GPT-4), p50k_base (for GPT-3)."
+    )
     return parser.parse_args()
 
 
@@ -71,7 +104,12 @@ def main() -> None:
             include_files=include_files,
             programming_extensions=programming_extensions if programming_extensions else None,
             exclude_dirs=exclude_dirs if exclude_dirs else None,
-            max_file_size_mb=args.max_file_size
+            max_file_size_mb=args.max_file_size,
+            summary_mode=args.summary_mode,
+            include_comments=args.include_comments,
+            collect_metadata=args.metadata,
+            count_tokens=args.count_tokens,
+            token_model=args.token_model
         )
 
         if args.clipboard:
