@@ -23,7 +23,7 @@ class DirectoryTreeGenerator:
     def generate(self, start_path: str) -> str:
         """Generates an ASCII representation of the directory tree starting from start_path."""
         if not os.path.exists(start_path):
-            return f"Directory not found: {start_path}\n"
+            raise FileNotFoundError(f"Directory not found: {start_path}")
         
         tree = ""
         for root, dirs, files in os.walk(start_path):
@@ -167,8 +167,11 @@ class CodeAggregator:
         """Writes the aggregated content to a file."""
         content = content or self.aggregate_code()
         filename = filename or self.output_file
-        with open(filename, "w", encoding="utf-8") as f:
-            f.write(content)
+        try:
+            with open(filename, "w", encoding="utf-8") as f:
+                f.write(content)
+        except IOError as e:
+            raise IOError(f"Error writing to file {filename}: {e}")
 
     def copy_to_clipboard(self, content: Optional[str] = None) -> bool:
         """Copies the aggregated content to the clipboard across different platforms."""
@@ -192,6 +195,10 @@ class CodeAggregator:
                         process.communicate(content.encode("utf-8"))
                         return True
                     except FileNotFoundError:
+                        print("Could not find clipboard command. Please install xclip or xsel.")
+                        return False
+                    except Exception as e:
+                        print(f"Error executing clipboard command: {cmd}: {e}")
                         continue
                 print("Could not find clipboard command. Please install xclip or xsel.")
                 return False

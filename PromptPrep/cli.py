@@ -75,8 +75,14 @@ def main() -> None:
         else:
             aggregator.write_to_file()
             print(f"Aggregated file '{args.output_file}' created successfully.")
+    except FileNotFoundError as e:
+        print(f"Error: Directory not found: {e}", file=sys.stderr)
+        sys.exit(1)
+    except IOError as e:
+        print(f"Error: File error: {e}", file=sys.stderr)
+        sys.exit(1)
     except Exception as e:
-        print(f"An error occurred: {e}", file=sys.stderr)
+        print(f"An unexpected error occurred: {e}", file=sys.stderr)
         sys.exit(1)
 
 
