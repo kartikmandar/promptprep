@@ -1,7 +1,8 @@
 import argparse
 import os
 import sys
-from PromptPrep.aggregator import CodeAggregator
+from promptprep.aggregator import CodeAggregator
+from promptprep.tui import select_files_interactive
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -56,6 +57,11 @@ def parse_arguments() -> argparse.Namespace:
         help="Maximum file size in MB to include. Files larger than this will be skipped. Defaults to 100 MB."
     )
     parser.add_argument(
+        "--interactive",
+        action="store_true",
+        help="Use interactive TUI mode to select files/directories to include or exclude."
+    )
+    parser.add_argument(
         "--summary-mode",
         action="store_true",
         help="Include only function/class declarations and docstrings."
@@ -88,14 +94,47 @@ def parse_arguments() -> argparse.Namespace:
         default="cl100k_base",
         help="The tokenizer model to use for counting tokens. Common options: cl100k_base (for GPT-4), p50k_base (for GPT-3)."
     )
+    parser.add_argument(
+        "--format",
+        type=str,
+        choices=["plain", "markdown", "html", "highlighted"],
+        default="plain",
+        help="Output format. Options: plain (default), markdown, html, highlighted."
+    )
+    parser.add_argument(
+        "--line-numbers",
+        action="store_true",
+        help="Include line numbers in the output. Defaults to False."
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_arguments()
-    include_files = {f.strip() for f in args.include_files.split(",") if f.strip()}
+    
+    # Initialize these variables
+    include_files = set()
+    exclude_dirs = set()
+    should_continue = True
+    
+    # If interactive mode is enabled, use the TUI to select files
+    if args.interactive:
+        print("Starting interactive file selection...")
+        include_files, exclude_dirs, should_continue = select_files_interactive(args.directory)
+        
+        if should_continue:
+            print(f"Selected {len(include_files)} files to include and {len(exclude_dirs)} directories to exclude.")
+        else:
+            print("Interactive selection canceled. No files will be processed.")
+            return
+    else:
+        # Parse command-line include files
+        include_files = {f.strip() for f in args.include_files.split(",") if f.strip()}
+        # Parse command-line exclude dirs
+        exclude_dirs = {d.strip() for d in args.exclude_dirs.split(",") if d.strip()}
+    
+    # Parse other arguments
     programming_extensions = {e.strip() for e in args.extensions.split(",") if e.strip()}
-    exclude_dirs = {d.strip() for d in args.exclude_dirs.split(",") if d.strip()}
 
     try:
         aggregator = CodeAggregator(
@@ -109,7 +148,9 @@ def main() -> None:
             include_comments=args.include_comments,
             collect_metadata=args.metadata,
             count_tokens=args.count_tokens,
-            token_model=args.token_model
+            token_model=args.token_model,
+            output_format=args.format,
+            line_numbers=args.line_numbers
         )
 
         if args.clipboard:
