@@ -25,22 +25,28 @@ def parse_arguments() -> argparse.Namespace:
     # Group for exclusive commands: standard aggregation or diff
     action_group = parser.add_mutually_exclusive_group()
 
-    # Options for comparing files
-    diff_group = action_group.add_argument_group("File Diff Options")
-    diff_group.add_argument(
+    # Add the main --diff trigger to the *mutually exclusive* group
+    action_group.add_argument(
         "--diff",
         metavar="PREV_FILE",
         dest="prev_file",
         type=str,
-        help="Compare a previous aggregation file with the current one",
+        help="Compare a previous aggregation file with the current one. Cannot be used with other action flags.",  # Example help text
     )
-    diff_group.add_argument(
+
+    # Create a separate argument group for *visual* organization of diff options in help
+    diff_options_group = parser.add_argument_group(
+        "File Diff Options (used with --diff)"
+    )
+
+    # Add the diff-specific options to the *visual* group
+    diff_options_group.add_argument(
         "--diff-context",
         type=int,
         default=3,
         help="Number of context lines to include in diff (default: 3)",
     )
-    diff_group.add_argument(
+    diff_options_group.add_argument(
         "--diff-output", type=str, help="Write diff to specified file instead of stdout"
     )
 
@@ -192,7 +198,7 @@ def main() -> None:
             if config_file:
                 print(f"Configuration loaded from '{config_file}'.")
             else:
-                print(f"Configuration loaded from default location.")
+                print("Configuration loaded from default location.")
         except FileNotFoundError as e:
             print(f"Error: {e}", file=sys.stderr)
             sys.exit(1)

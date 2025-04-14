@@ -2,7 +2,7 @@
 
 import os
 import sys
-from typing import List, Set, Tuple, Dict, Optional
+from typing import List, Set, Tuple, Dict
 
 if sys.platform == "win32":
     # Raise ImportError immediately if on Windows
@@ -291,32 +291,20 @@ class FileSelector:
         return True
 
     def get_selections(self) -> Tuple[Set[str], Set[str], bool]:
-        """Gives you the final list of what's included and excluded.
+        """Get the current selections and return them.
 
         Returns:
-            - Set of files to include
-            - Set of directories to exclude
-            - Whether to save these choices (True) or discard them (False)
+            A tuple of (include_files, exclude_dirs, save_selections)
         """
         include_files = {
-            path for path, include in self.selected_items.items() if include
+            os.path.relpath(path, self.start_path)
+            for path, include in self.selected_items.items()
+            if include
         }
-        exclude_files = {
-            path for path, include in self.selected_items.items() if not include
-        }
+        # We're not using exclude_files in the return value, so remove the assignment
 
-        # For API consistency with the rest of the program, return paths relative to the starting directory
-        relative_include_files = set()
-        for path in include_files:
-            try:
-                rel_path = os.path.relpath(path, self.start_path)
-                relative_include_files.add(rel_path)
-            except ValueError:
-                # Skip paths that can't be made relative (e.g. on different drives in Windows)
-                pass
-
-        # For directories, we keep absolute paths to match the program's expectations
-        return relative_include_files, self.exclude_dirs, self.save_selections
+        # Just return what we need
+        return include_files, self.exclude_dirs, self.save_selections
 
     def run(self, stdscr) -> Tuple[Set[str], Set[str], bool]:
         """Starts up the file selector interface.

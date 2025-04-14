@@ -6,7 +6,6 @@ from io import StringIO
 import sys
 
 from promptprep.cli import parse_arguments, main
-from promptprep.aggregator import CodeAggregator
 
 
 def test_diff_args_parsing():

@@ -1,10 +1,6 @@
-import os
-import re
 import pytest
-from unittest import mock
 
 from promptprep.formatters import (
-    BaseFormatter,
     PlainTextFormatter,
     MarkdownFormatter,
     HtmlFormatter,
@@ -302,7 +298,10 @@ class TestHighlightedFormatter:
         # Check if pygments is available
         pygments_available = True
         try:
-            import pygments
+            # Use importlib.util.find_spec instead of direct import
+            import importlib.util
+
+            pygments_available = importlib.util.find_spec("pygments") is not None
         except ImportError:
             pygments_available = False
 

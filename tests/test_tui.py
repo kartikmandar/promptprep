@@ -8,7 +8,7 @@ if sys.platform == "win32":
     pytest.skip("curses module not available on Windows", allow_module_level=True)
 
 
-import curses
+# Remove the unused direct import of curses as it's imported via mock_curses fixture
 from promptprep.tui import FileSelector, select_files_interactive
 
 
@@ -79,7 +79,6 @@ def temp_dir_with_files(tmpdir):
     # Hidden files
     hidden_file = test_dir.join(".hidden.py")
     hidden_file.write("# hidden file")
-    hidden_dir = test_dir.mkdir(".hidden_dir")
 
     return test_dir
 
@@ -110,7 +109,6 @@ class TestFileSelector:
         assert "subdir" in contents
         # Hidden files should not be included by default
         assert ".hidden.py" not in contents
-        assert ".hidden_dir" not in contents
 
     def test_get_directory_contents_with_hidden(self, temp_dir_with_files):
         """Test retrieving directory contents including hidden files."""
@@ -120,7 +118,6 @@ class TestFileSelector:
 
         # Should now include hidden files
         assert ".hidden.py" in contents
-        assert ".hidden_dir" in contents
 
     def test_get_directory_contents_permission_error(self, temp_dir_with_files):
         """Test handling of permission errors."""

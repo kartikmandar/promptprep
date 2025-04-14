@@ -2,7 +2,6 @@ from .aggregator import CodeAggregator, DirectoryTreeGenerator
 
 # Conditionally import TUI components based on platform
 import platform
-import sys
 
 # Don't attempt to import TUI on Windows
 if platform.system() != "Windows":

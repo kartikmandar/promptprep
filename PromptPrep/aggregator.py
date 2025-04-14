@@ -1,16 +1,15 @@
 import os
 import subprocess
 import platform
-from typing import Optional, Set, Dict, Any, List, Tuple
+from typing import Optional, Set, Dict
 from tqdm import tqdm
 import ast
-from pathlib import Path
 import tokenize
 import io
 import warnings
 import tiktoken
 import difflib
-from .formatters import get_formatter, BaseFormatter, CustomTemplateFormatter
+from .formatters import get_formatter, CustomTemplateFormatter
 
 
 class DirectoryTreeGenerator:

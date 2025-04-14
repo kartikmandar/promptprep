@@ -2,13 +2,8 @@ import os
 import tempfile
 import pytest
 from unittest import mock
-import io
-import sys
 import platform
 import subprocess
-import ast
-from pathlib import Path
-import tiktoken
 
 from promptprep.aggregator import DirectoryTreeGenerator, CodeAggregator
 
@@ -360,7 +355,6 @@ class TestCodeAggregator:
                 )
 
                 # Mock the formatter.format_metadata to include our token info
-                original_format = aggregator.formatter.format_metadata
                 aggregator.formatter.format_metadata = mock.Mock(
                     return_value="# Codebase Metadata\n# token_model: cl100k_base\n# Token Count: 10"
                 )
@@ -681,8 +675,7 @@ class TestClass:
                 "Method docstring.",  # For method
             ],
         ):
-            # Mock process_node_body with our controlled implementation to ensure method signatures are as expected
-            original_process_node_body = ast.NodeVisitor.visit
+            # Mock process_node_body with our controlled implementation
             with mock.patch("ast.NodeVisitor.visit"):
                 aggregator = CodeAggregator()
                 # Use a simplified mock implementation instead of the real one

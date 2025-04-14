@@ -2,19 +2,26 @@ import os
 import subprocess
 import sys
 import tempfile
-import pytest
-from unittest import mock
-import platform
-
-from promptprep.aggregator import CodeAggregator, DirectoryTreeGenerator
 
 
 def run_script(args, cwd):
     """Runs our CLI script and returns its output for testing."""
-    cmd = [sys.executable, "-m", "promptprep.cli"] + args
+    # Get the path to the project root directory
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    # Get the path to the CLI script
+    cli_script = os.path.join(project_root, "promptprep", "cli.py")
+
+    # Set up environment with PYTHONPATH to ensure imports work
+    env = os.environ.copy()
+    env["PYTHONPATH"] = project_root
+
+    cmd = [sys.executable, cli_script] + args
     print(f"Running command: {' '.join(cmd)}")
     print(f"Working directory: {cwd}")
-    result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
+    print(f"PYTHONPATH: {env['PYTHONPATH']}")
+
+    result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, env=env)
     print(f"Exit code: {result.returncode}")
     print(f"Standard output: {result.stdout}")
     print(f"Error output: {result.stderr}")

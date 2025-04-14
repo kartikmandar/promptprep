@@ -1,7 +1,6 @@
 """Unit tests for the configuration management functionality."""
 
 import os
-import json
 import tempfile
 import argparse
 from unittest import mock
@@ -166,8 +165,8 @@ def test_default_config_location():
     """Verifies we create and use the default config location correctly."""
     with mock.patch("os.makedirs") as mock_makedirs:
         with mock.patch("os.path.exists", return_value=False):
-            with mock.patch("builtins.open", mock.mock_open()) as mock_file:
-                with mock.patch("json.dump") as mock_json_dump:
+            with mock.patch("builtins.open", mock.mock_open()):
+                with mock.patch("json.dump"):
                     # Create sample arguments
                     args = argparse.Namespace(
                         directory=os.getcwd(), output_file="output.txt"

@@ -4,21 +4,24 @@ from abc import ABC, abstractmethod
 import os
 from typing import Dict, Optional, List, Any
 import re
-import string
 
 # Try to import pygments, but make it optional
-try:
-    import pygments
+import importlib.util
+
+# Check if pygments is available without importing it directly
+PYGMENTS_AVAILABLE = importlib.util.find_spec("pygments") is not None
+
+if PYGMENTS_AVAILABLE:
     from pygments import highlight
     from pygments.lexers import get_lexer_for_filename, TextLexer
-    from pygments.formatters import (
-        HtmlFormatter as PygmentsHtmlFormatter,
-        TerminalFormatter,
-    )
-
-    PYGMENTS_AVAILABLE = True
-except ImportError:
-    PYGMENTS_AVAILABLE = False
+    from pygments.formatters import HtmlFormatter as PygmentsHtmlFormatter
+    from pygments.formatters import Terminal256Formatter
+else:
+    # Define placeholders to avoid errors
+    highlight = None
+    TextLexer = None
+    PygmentsHtmlFormatter = None
+    Terminal256Formatter = None
 
 
 class BaseFormatter(ABC):
@@ -86,9 +89,9 @@ class PlainTextFormatter(BaseFormatter):
 
     def format_metadata(self, metadata: Dict[str, Any]) -> str:
         """Format metadata section in plain text."""
-        result = f"# ======================\n"
-        result += f"# Codebase Metadata\n"
-        result += f"# ======================\n\n"
+        result = "# ======================\n"
+        result += "# Codebase Metadata\n"
+        result += "# ======================\n\n"
 
         for key, value in metadata.items():
             if key == "comment_ratio" and isinstance(value, float):
@@ -330,7 +333,7 @@ class HighlightedFormatter(BaseFormatter):
             self.pygments_formatter = (
                 PygmentsHtmlFormatter(cssclass="source", wrapcode=True)
                 if html_output
-                else TerminalFormatter()
+                else Terminal256Formatter()
             )
         else:
             self.pygments_formatter = None

@@ -1,10 +1,6 @@
 import os
 import tempfile
-import pytest
 from unittest import mock
-import io
-import sys
-import platform
 import warnings
 
 from promptprep.aggregator import CodeAggregator, DirectoryTreeGenerator
@@ -85,8 +81,6 @@ class TestCodeAggregatorEdgeCases:
             aggregator = CodeAggregator(directory=tmpdir, count_tokens=True)
 
             # Create a patched version of count_text_tokens that simulates tiktoken failure
-            original_count_tokens = aggregator.count_text_tokens
-
             def mock_count_tokens(text):
                 # Simulate tiktoken failing
                 aggregator.tokenizer = None
@@ -96,10 +90,9 @@ class TestCodeAggregatorEdgeCases:
             aggregator.count_text_tokens = mock_count_tokens
 
             # Test the fallback
-            with warnings.catch_warnings(record=True) as w:
-                token_count = aggregator.count_text_tokens("This is a test.")
-                # Should be 4 words
-                assert token_count == 4
+            token_count = aggregator.count_text_tokens("This is a test.")
+            # Should be 4 words
+            assert token_count == 4
 
     def test_empty_directory_aggregation(self):
         """Test aggregating an empty directory."""
@@ -145,6 +138,9 @@ class TestCodeAggregatorEdgeCases:
                         "Failed to initialize formatter" in str(warning.message)
                         for warning in w
                     )
+
+                    # Verify the aggregator was properly set up
+                    assert aggregator.output_format == "markdown"
 
     def test_unsupported_clipboard_platform(self):
         """Test clipboard functionality on unsupported platforms."""

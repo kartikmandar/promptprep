@@ -3,10 +3,8 @@ import tempfile
 import time
 import pytest
 from unittest import mock
-import datetime
-from pathlib import Path
 
-from promptprep.aggregator import CodeAggregator, DirectoryTreeGenerator
+from promptprep.aggregator import CodeAggregator
 
 
 class TestIncrementalProcessing:

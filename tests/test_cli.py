@@ -6,8 +6,8 @@ import pytest
 from unittest import mock
 from io import StringIO
 import subprocess
-from pathlib import Path
 import json
+from promptprep.cli import parse_arguments, main
 
 
 def run_script(args, cwd):
@@ -25,12 +25,6 @@ def run_script(args, cwd):
     print(f"Standard output: {result.stdout}")
     print(f"Error output: {result.stderr}")
     return result
-
-
-# Import the CLI module functions directly for testing
-from promptprep.cli import parse_arguments, main
-from promptprep.aggregator import CodeAggregator, DirectoryTreeGenerator
-from promptprep.config import ConfigManager
 
 
 def test_parse_arguments():
@@ -284,11 +278,11 @@ def test_main_load_config():
             # Mock the load_config and apply_config methods
             with mock.patch(
                 "promptprep.config.ConfigManager.load_config", return_value=test_config
-            ) as mock_load:
+            ):
                 with mock.patch(
                     "promptprep.config.ConfigManager.apply_config_to_args",
                     return_value=merged_args,
-                ) as mock_apply:
+                ):
                     # Mock CodeAggregator to avoid actual file operations
                     mock_instance = mock.Mock()
                     mock_instance.write_to_file.return_value = None
