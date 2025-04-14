@@ -75,11 +75,6 @@ filename = "pyproject.toml"
 search = 'version = "{current_version}"'
 replace = 'version = "{new_version}"'
 
+# Simplified package discovery configuration
 [tool.setuptools]
-# Explicitly name the package
-package-dir = { "" = "." }
-
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["promptprep*"]
-exclude = ["tests*", "dist*", "*.egg-info"]
+packages = ["promptprep"]
