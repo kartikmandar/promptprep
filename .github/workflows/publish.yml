@@ -7,8 +7,6 @@ on:
 
 permissions:
   contents: read
-  # IMPORTANT: This permission is required for pypa/gh-action-pypi-publish
-  id-token: write
 
 jobs:
   deploy:
@@ -33,12 +31,14 @@ jobs:
 
       - name: Publish package to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        # No API token needed here! It uses OIDC (trusted publisher)
-        # You need to configure PyPI for trusted publishing first.
-        # See: https://docs.pypi.org/trusted-publishers/
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          # You need to create a PyPI API token and add it as a GitHub secret
+          # See: https://pypi.org/help/#apitoken
 
     # Optional: Publish to TestPyPI as well (or instead during testing)
     # - name: Publish package to TestPyPI
     #   uses: pypa/gh-action-pypi-publish@release/v1
     #   with:
     #     repository-url: https://test.pypi.org/legacy/
+    #     password: ${{ secrets.TEST_PYPI_API_TOKEN }}

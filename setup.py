@@ -27,10 +27,11 @@ elif os.path.exists("PromptPrep") and os.path.isdir("PromptPrep"):
         try:
             # On Unix systems
             os.symlink("PromptPrep", "promptprep")
-        except:
+        except OSError:
             # On Windows or if symlink fails
             print("Symlink creation failed, copying directory instead")
             import shutil
+
             shutil.copytree("PromptPrep", "promptprep")
 else:
     # If the directory doesn't exist, this will cause a clear error
