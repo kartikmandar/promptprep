@@ -78,4 +78,5 @@ replace = 'version = "{new_version}"'
 
 # Ensure correct package discovery and case-sensitivity
 [tool.setuptools]
-packages = ["promptprep"]
+# Remove explicit packages declaration to let setup.py handle it
+# This allows setup.py to determine the correct package name based on what exists
