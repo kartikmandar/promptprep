@@ -28,29 +28,41 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Debug directory structure
+        shell: bash
+        run: |
+          echo "Workspace directory content:"
+          find . -type d -maxdepth 2
+          echo "Python files:"
+          find . -name "*.py" | head -20
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: List directory contents before installation
-        shell: bash
+      # Handle case-sensitivity issues on Ubuntu
+      - name: Ensure package directory exists with correct name (Ubuntu)
+        if: runner.os == 'Linux'
         run: |
-          ls -la
+          if [ -d "PromptPrep" ] && [ ! -d "promptprep" ]; then
+            cp -r PromptPrep promptprep
+          fi
 
-      - name: Install dependencies
+      - name: Install basic dependencies
         run: |
           python -m pip install --upgrade pip
-          # Directly use setup.py for more reliable installation
-          pip install -e .
-          # Install test dependencies separately
           pip install pytest pytest-cov pytest-mock
-          # Display installed packages for debugging
-          pip list
+
+      - name: Install the package and its dependencies
+        run: |
+          # Install the package without the dev dependencies first
+          pip install -e .
 
       - name: Run tests with pytest
         run: |
-          pytest -v
+          # Set PYTHONPATH to include current directory
+          python -m pytest tests/
 
   lint-format:
     runs-on: ubuntu-latest

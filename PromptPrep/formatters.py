@@ -4,10 +4,16 @@ import os
 from typing import Dict, Optional, List, Any
 import re
 import string
-import pygments
-from pygments import highlight
-from pygments.lexers import get_lexer_for_filename, TextLexer
-from pygments.formatters import HtmlFormatter as PygmentsHtmlFormatter, TerminalFormatter
+
+# Try to import pygments, but make it optional
+try:
+    import pygments
+    from pygments import highlight
+    from pygments.lexers import get_lexer_for_filename, TextLexer
+    from pygments.formatters import HtmlFormatter as PygmentsHtmlFormatter, TerminalFormatter
+    PYGMENTS_AVAILABLE = True
+except ImportError:
+    PYGMENTS_AVAILABLE = False
 
 
 class BaseFormatter(ABC):
@@ -312,8 +318,13 @@ class HighlightedFormatter(BaseFormatter):
         """
         super().__init__()
         self.html_output = html_output
-        self.pygments_formatter = PygmentsHtmlFormatter(cssclass="source", wrapcode=True) if html_output else TerminalFormatter()
         self.base_formatter = HtmlFormatter() if html_output else PlainTextFormatter()
+        
+        # Check if pygments is available
+        if PYGMENTS_AVAILABLE:
+            self.pygments_formatter = PygmentsHtmlFormatter(cssclass="source", wrapcode=True) if html_output else TerminalFormatter()
+        else:
+            self.pygments_formatter = None
     
     def format_directory_tree(self, tree: str) -> str:
         """Format the directory tree with highlighting."""
@@ -325,6 +336,10 @@ class HighlightedFormatter(BaseFormatter):
     
     def format_code_content(self, content: str, file_path: str) -> str:
         """Format code content with syntax highlighting (without line numbers)."""
+        # Fall back to the base formatter if pygments is not available
+        if not PYGMENTS_AVAILABLE:
+            return self.base_formatter.format_code_content(content, file_path)
+        
         try:
             lexer = get_lexer_for_filename(file_path, stripall=True)
         except Exception:

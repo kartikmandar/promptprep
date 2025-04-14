@@ -55,6 +55,7 @@ dev = [
     "bump-my-version",
     "pytest-cov",
     "pytest-mock",
+    "pygments>=2.10.0",
 ]
 all = ["pygments>=2.10.0"]
 
