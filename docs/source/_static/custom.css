@@ -1,0 +1,111 @@
+/* Custom styles for promptprep documentation */
+
+/* Improve code block appearance */
+div.highlight {
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+}
+
+/* Improve table appearance */
+table.docutils {
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+    margin-bottom: 24px;
+}
+
+table.docutils td,
+table.docutils th {
+    padding: 8px 16px;
+}
+
+/* Improve heading styles */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    margin-top: 24px;
+    margin-bottom: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+h1 {
+    font-size: 2em;
+    border-bottom: 1px solid #eaecef;
+    padding-bottom: 0.3em;
+}
+
+h2 {
+    font-size: 1.5em;
+    border-bottom: 1px solid #eaecef;
+    padding-bottom: 0.3em;
+}
+
+/* Improve admonitions */
+.admonition {
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+    margin-bottom: 24px;
+}
+
+/* Custom class for command examples */
+.command-example {
+    background-color: #f8f8f8;
+    border-left: 3px solid #2980B9;
+    padding: 10px 15px;
+    margin-bottom: 20px;
+}
+
+/* Custom class for feature highlights */
+.feature-highlight {
+    background-color: #f0f7fb;
+    border-left: 3px solid #5bc0de;
+    padding: 10px 15px;
+    margin-bottom: 20px;
+}
+
+/* Custom class for tips */
+.tip-box {
+    background-color: #f0fff0;
+    border-left: 3px solid #5cb85c;
+    padding: 10px 15px;
+    margin-bottom: 20px;
+}
+
+/* Custom class for warnings */
+.warning-box {
+    background-color: #fff9f0;
+    border-left: 3px solid #f0ad4e;
+    padding: 10px 15px;
+    margin-bottom: 20px;
+}
+
+/* Improve navigation sidebar */
+.wy-nav-side {
+    background: #343131;
+}
+
+.wy-side-nav-search {
+    background-color: #2980B9;
+}
+
+/* Improve links */
+a {
+    color: #2980B9;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #3091d1;
+    text-decoration: underline;
+}
+
+/* Improve code inline */
+code.literal {
+    color: #e74c3c;
+    background-color: #f9f2f4;
+    border-radius: 4px;
+    padding: 2px 4px;
+}

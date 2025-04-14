@@ -19,5 +19,5 @@ python:
   install:
     - method: pip
       path: .
-      extras:
-        - docs # Install the 'docs' extras defined in pyproject.toml
+      extra_requirements:
+        - docs
