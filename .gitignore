@@ -23,5 +23,3 @@ htmlcov/
 !requirements.txt
 *_template
 *.template
-
-# APT related files and directories
