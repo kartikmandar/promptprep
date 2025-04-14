@@ -284,7 +284,7 @@ class HtmlFormatter(BaseFormatter):
         
         for file_path, size_mb in skipped_files:
             escaped_path = file_path.replace("<", "&lt;").replace(">", "&gt;")
-            result += f"<tr><td>{escaped_path}</td><td>{size_mb:.2f} MB</td></tr>\n"
+            result += f"<tr><td>{escaped_path}</td><td>{size_mb:.2f} MB}</td></tr>\n"
         
         result += "</table>\n"
         return result
@@ -336,8 +336,8 @@ class HighlightedFormatter(BaseFormatter):
     
     def format_code_content(self, content: str, file_path: str) -> str:
         """Format code content with syntax highlighting (without line numbers)."""
-        # Fall back to the base formatter if pygments is not available
-        if not PYGMENTS_AVAILABLE:
+        # If pygments is not available or we're in terminal mode, fall back to base formatter
+        if not PYGMENTS_AVAILABLE or not self.html_output:
             return self.base_formatter.format_code_content(content, file_path)
         
         try:
@@ -348,12 +348,9 @@ class HighlightedFormatter(BaseFormatter):
         # Line numbering is handled by the aggregator based on the flag
         highlighted = highlight(content, lexer, self.pygments_formatter)
         
-        # For HTML output, we need to add CSS
-        if self.html_output:
-            css = self.pygments_formatter.get_style_defs('.source')
-            return f"<style>{css}</style>\n{highlighted}"
-        
-        return highlighted
+        # Always add CSS for HTML output
+        css = self.pygments_formatter.get_style_defs('.source')
+        return f"<style>{css}</style>\n{highlighted}"
     
     def format_metadata(self, metadata: Dict[str, Any]) -> str:
         """Format metadata section."""

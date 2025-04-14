@@ -295,20 +295,31 @@ class TestHighlightedFormatter:
     ])
     def test_format_code_content(self, filename, content):
         """Test formatting code content with syntax highlighting."""
+        # Check if pygments is available
+        pygments_available = True
+        try:
+            import pygments
+        except ImportError:
+            pygments_available = False
+        
         # HTML formatter
         html_result = self.html_formatter.format_code_content(content, filename)
-        assert "<style>" in html_result
-        assert "class=" in html_result  # Pygments adds class attributes
         
-        # Terminal formatter - strip ANSI codes for comparison
-        # ANSI codes pattern: ESC[...m
+        if pygments_available:
+            # When Pygments is available, expect syntax highlighting
+            assert "<style>" in html_result
+            assert "class=" in html_result  # Pygments adds class attributes
+        else:
+            # When Pygments is not available, expect fallback to base formatter
+            assert "<pre class='file-content'>" in html_result
+            assert content in html_result
+        
+        # Terminal formatter - strip ANSI codes for comparison if Pygments is available
         terminal_result = self.terminal_formatter.format_code_content(content, filename)
-        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-        plain_result = ansi_escape.sub('', terminal_result)
         
-        # Check if the actual content is present (ignoring ANSI styling)
+        # Check if the actual content is present (ignoring styling)
         clean_content = content.replace(" ", "").replace("\n", "")
-        clean_result = plain_result.replace(" ", "").replace("\n", "")
+        clean_result = terminal_result.replace(" ", "").replace("\n", "")
         assert clean_content in clean_result
     
     def test_format_metadata(self):
