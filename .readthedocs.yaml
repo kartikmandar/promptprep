@@ -1,0 +1,23 @@
+# .readthedocs.yaml
+# Read the Docs configuration file
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+
+version: 2
+
+# Set the version of Python and other tools you might need
+build:
+  os: ubuntu-22.04
+  tools:
+    python: "3.10" # Use the minimum Python version your project supports
+
+# Build documentation in the docs/ directory with Sphinx
+sphinx:
+  configuration: docs/source/conf.py
+
+# If you need build dependencies, declare them here
+python:
+  install:
+    - method: pip
+      path: .
+      extras:
+        - docs # Install the 'docs' extras defined in pyproject.toml

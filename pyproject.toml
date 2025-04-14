@@ -56,6 +56,15 @@ dev = [
     "pytest-cov",
     "pytest-mock",
     "pygments>=2.10.0",
+    "sphinx",
+    "sphinx-rtd-theme",
+    "myst-parser",
+]
+
+docs = [
+    "sphinx>=8.0",
+    "sphinx-rtd-theme",
+    "myst-parser",
 ]
 all = ["pygments>=2.10.0"]
 

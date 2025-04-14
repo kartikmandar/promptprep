@@ -23,3 +23,5 @@ htmlcov/
 !requirements.txt
 *_template
 *.template
+/docs/build/
+*.log
