@@ -1,6 +1,16 @@
 name: Python CI
 
-on: [push, pull_request] # Run on pushes and pull requests to any branch
+on:
+  push:
+    branches: # Only run on pushes to these branches
+      - main
+      # Add other branches like 'develop' if needed
+    # Explicitly ignore tags for the push trigger
+    tags-ignore:
+      - 'v*.*.*'
+  pull_request: # Run on pull requests targeting these branches
+    branches:
+      - main
 
 permissions:
   contents: read # Default permission

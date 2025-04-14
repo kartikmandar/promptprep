@@ -1,10 +1,14 @@
 import os
 import sys
-import curses
 import pytest
 from unittest import mock
 from io import StringIO
 
+if sys.platform == "win32":
+    pytest.skip("curses module not available on Windows", allow_module_level=True)
+
+
+import curses
 from promptprep.tui import FileSelector, select_files_interactive
 
 # Mock for curses.window object
