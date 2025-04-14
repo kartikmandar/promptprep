@@ -1,17 +1,17 @@
-"""Terminal User Interface for interactive file/directory selection."""
+"""A friendly terminal interface for choosing which files to process."""
 import curses
 import os
 import sys
 from typing import List, Set, Tuple, Dict, Optional
 
 class FileSelector:
-    """Interactive file/directory selector using curses."""
+    """Lets you browse and select files using arrow keys and spacebar."""
     
     def __init__(self, start_path: str):
-        """Initialize the file selector with a starting directory.
+        """Gets everything ready for file selection.
         
         Args:
-            start_path: The directory to start browsing from
+            start_path: Where to start browsing from
         """
         self.start_path = os.path.abspath(start_path)
         self.current_path = self.start_path
@@ -25,7 +25,7 @@ class FileSelector:
         self.save_selections = False  # Flag to indicate whether selections should be saved
     
     def _get_directory_contents(self) -> List[str]:
-        """Get the sorted contents of the current directory, filtering hidden items if needed."""
+        """Gets a sorted list of files and folders, optionally showing hidden items."""
         try:
             items = os.listdir(self.current_path)
             # Filter hidden files if show_hidden is False
@@ -45,7 +45,7 @@ class FileSelector:
             return self._get_directory_contents()
     
     def _draw_screen(self, stdscr) -> None:
-        """Draw the TUI on the screen."""
+        """Shows the current directory contents and selection status on screen."""
         stdscr.clear()
         height, width = stdscr.getmaxyx()
         
@@ -135,7 +135,7 @@ class FileSelector:
         stdscr.refresh()
     
     def _toggle_selection(self, path: str) -> None:
-        """Toggle item selection state (include, exclude, none)."""
+        """Cycles through include/exclude/unselected states for a file or directory."""
         is_dir = os.path.isdir(path)
         
         # For directories, toggle between include, exclude dir, and none
@@ -167,7 +167,7 @@ class FileSelector:
                 self.selected_items[path] = True
     
     def _toggle_all_in_directory(self) -> None:
-        """Toggle selection for all files in the current directory."""
+        """Selects or deselects all files in the current directory."""
         all_selected = True
         any_selected = False
         
@@ -204,10 +204,10 @@ class FileSelector:
                     self.selected_items[item_path] = True
     
     def _handle_key(self, key, stdscr) -> bool:
-        """Handle keypress events.
+        """Responds to your keyboard input.
         
         Returns:
-            bool: True to continue the loop, False to exit
+            True to keep going, False to exit
         """
         if key == curses.KEY_UP:
             self.cursor_pos = max(0, self.cursor_pos - 1)
@@ -264,13 +264,12 @@ class FileSelector:
         return True
     
     def get_selections(self) -> Tuple[Set[str], Set[str], bool]:
-        """Get the final sets of included files and excluded directories.
+        """Gives you the final list of what's included and excluded.
         
         Returns:
-            Tuple containing:
-              - Set of included file paths
-              - Set of excluded directory paths
-              - Boolean indicating if the selections should be saved (True) or discarded (False)
+            - Set of files to include
+            - Set of directories to exclude
+            - Whether to save these choices (True) or discard them (False)
         """
         include_files = {path for path, include in self.selected_items.items() if include}
         exclude_files = {path for path, include in self.selected_items.items() if not include}
@@ -289,16 +288,15 @@ class FileSelector:
         return relative_include_files, self.exclude_dirs, self.save_selections
     
     def run(self, stdscr) -> Tuple[Set[str], Set[str], bool]:
-        """Run the file selector interface.
+        """Starts up the file selector interface.
         
         Args:
-            stdscr: The curses standard screen object
+            stdscr: The main screen object from curses
             
         Returns:
-            Tuple containing:
-              - Set of included file paths
-              - Set of excluded directory paths
-              - Boolean indicating if the selections should be saved
+            - Set of files to include
+            - Set of directories to exclude
+            - Whether to save these choices
         """
         # Configure curses
         curses.curs_set(0)  # Hide cursor
@@ -318,16 +316,15 @@ class FileSelector:
 
 
 def select_files_interactive(directory: str) -> Tuple[Set[str], Set[str], bool]:
-    """Run the interactive file selector.
+    """Lets you pick files using an interactive menu.
     
     Args:
-        directory: The directory to start in
+        directory: Where to start browsing
         
     Returns:
-        Tuple containing:
-          - Set of included file paths
-          - Set of excluded directory paths
-          - Boolean indicating if selections should be saved
+        - Set of files you want to include
+        - Set of directories you want to skip
+        - Whether you want to save these choices
     """
     try:
         return curses.wrapper(FileSelector(directory).run)

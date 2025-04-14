@@ -8,6 +8,7 @@ from .formatters import (
     HighlightedFormatter,
     get_formatter
 )
+from .config import ConfigManager
 
 __all__ = [
     "CodeAggregator",
@@ -19,5 +20,6 @@ __all__ = [
     "MarkdownFormatter",
     "HtmlFormatter",
     "HighlightedFormatter",
-    "get_formatter"
+    "get_formatter",
+    "ConfigManager"
 ]

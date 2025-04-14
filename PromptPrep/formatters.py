@@ -1,8 +1,9 @@
-"""Formatters for different output formats in PromptPrep."""
+"""Makes your code look nice in different output formats."""
 from abc import ABC, abstractmethod
 import os
 from typing import Dict, Optional, List, Any
 import re
+import string
 import pygments
 from pygments import highlight
 from pygments.lexers import get_lexer_for_filename, TextLexer
@@ -10,7 +11,7 @@ from pygments.formatters import HtmlFormatter as PygmentsHtmlFormatter, Terminal
 
 
 class BaseFormatter(ABC):
-    """Base formatter class for all output formats."""
+    """The foundation for all our formatters."""
     
     def __init__(self):
         """Initialize the formatter."""
@@ -53,7 +54,7 @@ class BaseFormatter(ABC):
 
 
 class PlainTextFormatter(BaseFormatter):
-    """Plain text formatter - the default format."""
+    """Keeps things simple with plain text output."""
     
     def format_directory_tree(self, tree: str) -> str:
         """Format the directory tree in plain text."""
@@ -106,7 +107,7 @@ class PlainTextFormatter(BaseFormatter):
 
 
 class MarkdownFormatter(BaseFormatter):
-    """Markdown formatter."""
+    """Makes your code look great in Markdown documents."""
     
     def format_directory_tree(self, tree: str) -> str:
         """Format the directory tree in Markdown."""
@@ -160,7 +161,7 @@ class MarkdownFormatter(BaseFormatter):
 
 
 class HtmlFormatter(BaseFormatter):
-    """HTML formatter."""
+    """Creates a nice-looking webpage with your code."""
     
     def __init__(self):
         """Initialize HTML formatter with CSS styles."""
@@ -277,7 +278,7 @@ class HtmlFormatter(BaseFormatter):
         
         for file_path, size_mb in skipped_files:
             escaped_path = file_path.replace("<", "&lt;").replace(">", "&gt;")
-            result += f"<tr><td>{escaped_path}</td><td>{size_mb:.2f} MB</td></tr>\n"
+            result += f"<tr><td>{escaped_path}</td><td>{size_mb:.2f} MB}</td></tr>\n"
         
         result += "</table>\n"
         return result
@@ -301,13 +302,13 @@ class HtmlFormatter(BaseFormatter):
 
 
 class HighlightedFormatter(BaseFormatter):
-    """Syntax highlighted code formatter using Pygments."""
+    """Adds syntax highlighting to make your code pop."""
     
     def __init__(self, html_output: bool = True):
-        """Initialize highlighted formatter.
+        """Gets ready to highlight your code.
         
         Args:
-            html_output: Whether to output HTML (True) or terminal escape codes (False)
+            html_output: True for web pages, False for terminal colors
         """
         super().__init__()
         self.html_output = html_output
@@ -358,17 +359,156 @@ class HighlightedFormatter(BaseFormatter):
         return content
 
 
-def get_formatter(output_format: str = "plain") -> BaseFormatter:
-    """Get the appropriate formatter for the specified output format.
+class CustomTemplateFormatter(BaseFormatter):
+    """Lets you design your own output format using a template file.
     
-    Args:
-        output_format: The output format name, one of "plain", "markdown", "html", "highlighted"
+    Your template can use these placeholders:
+    - ${DIRECTORY_TREE} - Shows your folder structure
+    - ${FILE_HEADER:path} - Adds a header for each file
+    - ${FILE_CONTENT:path} - Puts in the actual code
+    - ${METADATA} - Adds stats about your codebase
+    - ${SKIPPED_FILES} - Lists any files that were too big
+    - ${FILES} - All your files with headers and content
+    - ${TITLE} - The main title
+    """
+
+    def __init__(self, template_file: str, base_format: str = "plain"):
+        """Initialize custom template formatter.
         
-    Returns:
-        An instance of the appropriate formatter class
+        Args:
+            template_file: Path to the template file
+            base_format: The base format to use for sections not defined in the template
+                         (plain, markdown, html, highlighted)
+        """
+        super().__init__()
+        self.template_file = template_file
+        self.template = self._load_template(template_file)
+        self.base_format = base_format
+        
+        # Use a base formatter for basic formatting
+        if base_format == "plain":
+            self.base_formatter = PlainTextFormatter()
+        elif base_format == "markdown":
+            self.base_formatter = MarkdownFormatter()
+        elif base_format == "html":
+            self.base_formatter = HtmlFormatter()
+        elif base_format == "highlighted":
+            self.base_formatter = HighlightedFormatter()
+        else:
+            self.base_formatter = PlainTextFormatter()
+
+    def _load_template(self, template_file: str) -> str:
+        """Load the template file content."""
+        try:
+            with open(template_file, 'r') as f:
+                return f.read()
+        except IOError as e:
+            raise IOError(f"Could not read template file: {e}")
+
+    def format_directory_tree(self, tree: str) -> str:
+        """Format the directory tree using the base formatter."""
+        return self.base_formatter.format_directory_tree(tree)
     
+    def format_file_header(self, file_path: str) -> str:
+        """Format a file header using the base formatter."""
+        return self.base_formatter.format_file_header(file_path)
+    
+    def format_code_content(self, content: str, file_path: str) -> str:
+        """Format code content using the base formatter."""
+        return self.base_formatter.format_code_content(content, file_path)
+    
+    def format_metadata(self, metadata: Dict[str, Any]) -> str:
+        """Format metadata section using the base formatter."""
+        return self.base_formatter.format_metadata(metadata)
+    
+    def format_error(self, error_msg: str) -> str:
+        """Format error messages using the base formatter."""
+        return self.base_formatter.format_error(error_msg)
+    
+    def format_skipped_files(self, skipped_files: List[tuple]) -> str:
+        """Format skipped files section using the base formatter."""
+        return self.base_formatter.format_skipped_files(skipped_files)
+
+    def render_template(self, directory_tree: str, files_content: Dict[str, str], 
+                       metadata: Dict[str, Any], skipped_files: List[tuple], title: str = "Code Aggregation") -> str:
+        """Render the template with the provided content.
+        
+        Args:
+            directory_tree: ASCII representation of the directory tree
+            files_content: Dictionary mapping file paths to their content
+            metadata: Dictionary of metadata about the codebase
+            skipped_files: List of (file_path, size) tuples for skipped files
+            title: Title of the output (default: "Code Aggregation")
+            
+        Returns:
+            The rendered template content
+        """
+        # Start with the template
+        result = self.template
+        
+        # Replace title placeholder
+        result = result.replace("${TITLE}", title)
+        
+        # Replace directory tree placeholder
+        if "${DIRECTORY_TREE}" in result:
+            formatted_tree = self.format_directory_tree(directory_tree)
+            result = result.replace("${DIRECTORY_TREE}", formatted_tree)
+        
+        # Replace metadata placeholder
+        if "${METADATA}" in result:
+            formatted_metadata = self.format_metadata(metadata)
+            result = result.replace("${METADATA}", formatted_metadata)
+        
+        # Replace skipped files placeholder
+        if "${SKIPPED_FILES}" in result:
+            formatted_skipped = self.format_skipped_files(skipped_files)
+            result = result.replace("${SKIPPED_FILES}", formatted_skipped)
+        
+        # Replace file header and content placeholders
+        for placeholder_type in ["FILE_HEADER", "FILE_CONTENT"]:
+            pattern = re.compile(r'\${' + placeholder_type + r':([^}]+)}')
+            matches = pattern.findall(result)
+            
+            for file_path in matches:
+                placeholder = f"${{{placeholder_type}:{file_path}}}"
+                
+                if file_path in files_content:
+                    if placeholder_type == "FILE_HEADER":
+                        formatted = self.format_file_header(file_path)
+                    else:  # FILE_CONTENT
+                        formatted = self.format_code_content(files_content[file_path], file_path)
+                    
+                    result = result.replace(placeholder, formatted)
+                else:
+                    error_msg = f"File not found: {file_path}"
+                    result = result.replace(placeholder, self.format_error(error_msg))
+        
+        # Handle generic file placeholders
+        if "${FILES}" in result:
+            file_content = ""
+            for file_path, content in files_content.items():
+                file_content += self.format_file_header(file_path)
+                file_content += self.format_code_content(content, file_path)
+            result = result.replace("${FILES}", file_content)
+        
+        return result
+
+
+# Add CustomTemplateFormatter to the get_formatter logic check
+def get_formatter(output_format: str = "plain", template_file: Optional[str] = None,
+                 base_format: str = "plain") -> BaseFormatter:
+    """Picks the right formatter for your needs.
+
+    Args:
+        output_format: How you want it to look (plain, markdown, html, highlighted, custom)
+        template_file: Your template file (needed for custom format)
+        base_format: Backup format for custom templates (defaults to plain)
+
+    Returns:
+        The formatter that'll do the job
+
     Raises:
-        ValueError: If an invalid format is specified
+        ValueError: If format is unknown or template is missing when needed
     """
     if output_format == "plain":
         return PlainTextFormatter()
@@ -377,6 +517,21 @@ def get_formatter(output_format: str = "plain") -> BaseFormatter:
     elif output_format == "html":
         return HtmlFormatter()
     elif output_format == "highlighted":
-        return HighlightedFormatter()
+        # Decide HTML vs terminal based on some logic or default?
+        # For CLI, terminal (False) might be better unless output is piped/redirected.
+        # Let's default to terminal highlighting for now if not HTML file.
+        # This part might need refinement based on desired behavior.
+        # For simplicity, let's assume highlighted implies terminal for non-HTML output.
+        # A better approach might be a separate flag or inferring from output file extension.
+        # Sticking to the original logic for now:
+        return HighlightedFormatter() # Defaults to HTML=True based on original code
+    elif output_format == "custom":
+        if not template_file:
+            raise ValueError("template_file is required for custom output format")
+        try:
+            # Pass base_format if needed by CustomTemplateFormatter constructor
+            return CustomTemplateFormatter(template_file, base_format=base_format)
+        except IOError as e:
+             raise ValueError(f"Error loading template file: {e}") # Raise ValueError for CLI handling
     else:
         raise ValueError(f"Unknown output format: {output_format}")

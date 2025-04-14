@@ -59,6 +59,22 @@ This command will:
 4.  Enable summary mode (declarations/docstrings only for Python).
 5.  Append metadata statistics to the output file.
 
+## Custom Templates
+You can define custom templates for the aggregated output by specifying the `custom` output format and providing a template file. The template file can include the following placeholders:
+
+- `${DIRECTORY_TREE}` - The directory structure
+- `${FILE_HEADER:path}` - The header for a file
+- `${FILE_CONTENT:path}` - The content of a file
+- `${METADATA}` - Codebase metadata section
+- `${SKIPPED_FILES}` - Files that were skipped due to size limit
+- `${FILES}` - All files with headers and content
+- `${TITLE}` - Title of the output (default: "Code Aggregation")
+
+Example usage:
+```bash
+python -m promptprep.cli --output-format custom --template-file /path/to/template.txt
+```
+
 ## Development
 
 Clone the repository and install in editable mode:

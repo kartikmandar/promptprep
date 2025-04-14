@@ -9,7 +9,8 @@ import tokenize
 import io
 import warnings
 import tiktoken
-from .formatters import get_formatter, BaseFormatter
+import difflib
+from .formatters import get_formatter, BaseFormatter, CustomTemplateFormatter
 
 
 
@@ -21,7 +22,6 @@ class DirectoryTreeGenerator:
         exclude_files: Optional[Set[str]] = None,
         programming_extensions: Optional[Set[str]] = None
     ):
-        # Default directories to exclude
         self.exclude_dirs = exclude_dirs or {
             "venv", "node_modules", "__pycache__", ".git", "dist", "build", "temp", "old_files", "flask_session"
         }
@@ -30,7 +30,7 @@ class DirectoryTreeGenerator:
         self.programming_extensions = programming_extensions
 
     def generate(self, start_path: str) -> str:
-        """Generates an ASCII representation of the directory tree starting from start_path."""
+        """Creates an ASCII representation of the directory structure starting from the given path."""
         if not os.path.exists(start_path):
             raise FileNotFoundError(f"Directory not found: {start_path}")
         
@@ -45,7 +45,7 @@ class DirectoryTreeGenerator:
             current_dir = os.path.basename(root) if rel_path else os.path.basename(start_path.rstrip(os.sep)) or start_path
             if current_dir in self.exclude_dirs:
                 tree += f"{indent}{current_dir}/ [EXCLUDED]\n"
-                dirs[:] = []  # Do not traverse further in this directory.
+                dirs[:] = []  # Skip this directory's contents
                 continue
             tree += f"{indent}{current_dir}/\n"
             
@@ -93,9 +93,7 @@ class CodeAggregator:
     DEFAULT_EXCLUDE_DIRS = {
         "venv", "node_modules", "__pycache__", ".git", "dist", "build", "temp", "old_files", "flask_session"
     }
-    # Default file size limit: 100 MB
     DEFAULT_MAX_FILE_SIZE_MB = 100.0
-    # Default token model (GPT-4's cl100k_base)
     DEFAULT_TOKEN_MODEL = "cl100k_base"
 
     def __init__(
@@ -113,7 +111,10 @@ class CodeAggregator:
         count_tokens: bool = False,
         token_model: str = DEFAULT_TOKEN_MODEL,
         output_format: str = "plain",
-        line_numbers: bool = False
+        line_numbers: bool = False,
+        template_file: Optional[str] = None,
+        incremental: bool = False,
+        last_run_timestamp: Optional[float] = None
     ):
         self.directory = directory or os.getcwd()
         self.output_file = output_file
@@ -125,11 +126,15 @@ class CodeAggregator:
         self.tree_generator = DirectoryTreeGenerator(self.exclude_dirs, self.include_files, self.exclude_files, self.programming_extensions)
         self.summary_mode = summary_mode
         self.include_comments = include_comments
-        self.include_metadata = collect_metadata  # Store the flag with a different name to avoid conflict
+        self.include_metadata = collect_metadata
         self.count_tokens = count_tokens
         self.token_model = token_model
         self.output_format = output_format
         self.line_numbers = line_numbers
+        self.template_file = template_file
+        self.incremental = incremental
+        self.last_run_timestamp = last_run_timestamp
+        self.file_mod_times: Dict[str, float] = {}
         self.metadata = {
             'total_files': 0,
             'total_lines': 0,
@@ -148,10 +153,10 @@ class CodeAggregator:
 
         # Initialize formatter
         try:
-            self.formatter = get_formatter(self.output_format)
+            self.formatter = get_formatter(self.output_format, self.template_file)
         except (ValueError, ImportError) as e:
             warnings.warn(f"Failed to initialize formatter for format '{self.output_format}': {e}. Falling back to plain text.")
-            self.formatter = get_formatter("plain")
+            self.formatter = get_formatter("plain", None)
 
     def is_programming_file(self, filename: str) -> bool:
         _, ext = os.path.splitext(filename)
@@ -174,13 +179,13 @@ class CodeAggregator:
         return rel_file_path in self.include_files
 
     def is_file_size_within_limit(self, file_path: str) -> bool:
-        """Check if the file size is within the configured limit."""
+        """Check if the file size is within our configured limit."""
         file_size_bytes = os.path.getsize(file_path)
         file_size_mb = file_size_bytes / (1024 * 1024)  # Convert to MB
         return file_size_mb <= self.max_file_size_mb
 
     def count_text_tokens(self, text: str) -> int:
-        """Count the number of tokens in a text string using the specified tokenizer."""
+        """Count the number of tokens in a text string using our tokenizer."""
         if not self.tokenizer:
             self.tokenizer = tiktoken.get_encoding(self.token_model)
         
@@ -189,27 +194,37 @@ class CodeAggregator:
             return len(tokens)
         except Exception as e:
             warnings.warn(f"Error counting tokens: {e}. Returning estimated count.")
-            # Fallback estimation (rough approximation)
+            # Fallback to a rough approximation when tokenizer fails
             return len(text.split())
 
+    def _get_file_mod_time(self, file_path: str) -> float:
+        """Get the last modified time of a file."""
+        return os.path.getmtime(file_path)
+
+    def _is_file_changed(self, file_path: str) -> bool:
+        """Check if a file has been modified since our last run."""
+        if not self.incremental or not self.last_run_timestamp:
+            return True
+        mod_time = self._get_file_mod_time(file_path)
+        return mod_time > self.last_run_timestamp
+
     def aggregate_code(self) -> str:
-        """Aggregates the directory tree and the content of programming-related files."""
+        """Brings together the directory tree and content of programming files into a single document."""
+        is_custom_format = isinstance(self.formatter, CustomTemplateFormatter)
         tree = self.tree_generator.generate(self.directory)
         
         if "Directory not found" in tree:
             error_message = f"Directory not found: {self.directory}"
             return self.formatter.format_error(error_message)
 
-        # --- Count files for progress bar ---
+        # Find files to process
         files_to_process = []
-        skipped_files = []
+        skipped_files_data = []
         for root, dirs, files in os.walk(self.directory):
-            # Apply directory exclusions early
             rel_path_for_exclusion_check = os.path.relpath(root, self.directory)
             if rel_path_for_exclusion_check == ".":
                 rel_path_for_exclusion_check = ""
             
-            # Filter excluded directories
             dirs[:] = [d for d in dirs if d not in self.exclude_dirs and 
                        not any(part in self.exclude_dirs for part in os.path.join(rel_path_for_exclusion_check, d).split(os.sep))]
 
@@ -224,147 +239,177 @@ class CodeAggregator:
                 rel_file_path = os.path.relpath(file_path, self.directory)
                 if self.should_exclude(rel_file_path) or not self.should_include(file_path):
                     continue
-                
+
                 if not self.is_file_size_within_limit(file_path):
-                    skipped_files.append((rel_file_path, os.path.getsize(file_path) / (1024 * 1024)))
+                    skipped_files_data.append((rel_file_path, os.path.getsize(file_path) / (1024 * 1024)))
                     continue
-                    
-                files_to_process.append(file_path)
 
-        # Start with an empty string for aggregated content
-        aggregated = ""
-        
-        # Initialize token counting variables
-        total_tokens = 0
-        
-        # Collect metadata if requested
-        metadata_dict = {}
-        if self.include_metadata or self.count_tokens:
-            metadata_dict = self.collect_metadata()
-            if self.count_tokens:
-                metadata_dict["token_model"] = self.token_model
-                metadata_dict["total_tokens"] = "[placeholder]"
-            
-            # Format the metadata using the formatter
-            if self.include_metadata:
-                metadata_section = self.formatter.format_metadata(metadata_dict)
-                aggregated += metadata_section + "\n\n"
-                
-                if self.count_tokens:
-                    # Count tokens for metadata section (without the token count line itself)
-                    metadata_tokens = self.count_text_tokens(metadata_section)
-                    total_tokens += metadata_tokens
+                if self._is_file_changed(file_path):
+                    files_to_process.append(file_path)
 
-        # Format the directory tree
-        tree_section = self.formatter.format_directory_tree(tree)
-        aggregated += tree_section
-        
-        if self.count_tokens:
-            tree_tokens = self.count_text_tokens(tree_section)
-            total_tokens += tree_tokens
-            
-        # --- Process files with progress bar ---
-        for file_path in tqdm(files_to_process, desc="Aggregating files", unit="file", leave=False):
-            rel_file_path = os.path.relpath(file_path, self.directory)
-            # Format file header
-            header = self.formatter.format_file_header(rel_file_path)
-            aggregated += header
-            
-            if self.count_tokens:
-                total_tokens += self.count_text_tokens(header)
-                
-            try:
-                with open(file_path, "r", encoding="utf-8", errors='ignore') as f:
-                    content = f.read()
+       # Custom format processing
+        if is_custom_format:
+            aggregated_data = {
+                "directory_tree": tree,
+                "files_content": {},
+                "metadata": {},
+                "skipped_files": skipped_files_data,
+                "title": f"Code Aggregation - {os.path.basename(self.directory)}"
+            }
+            if self.include_metadata or self.count_tokens:
+                 aggregated_data["metadata"] = self.collect_metadata()
+                 if self.count_tokens:
+                     aggregated_data["metadata"]["token_model"] = self.token_model
 
-                    if not self.include_comments:
-                        # More thorough comment removal, including inline comments
-                        processed_lines = []
-                        for line in content.splitlines():
-                            # Split the line at the first #, if any
-                            code_part = line.split('#', 1)[0]
-                            # If there's something left after stripping, or if it's just whitespace
-                            if code_part.strip() or not line.strip():
-                                processed_lines.append(code_part.rstrip())
-                        content = "\n".join(processed_lines)
+            # Process files for the template
+            for file_path in tqdm(files_to_process, desc="Aggregating files", unit="file", leave=False):
+                rel_file_path = os.path.relpath(file_path, self.directory)
+                try:
+                    with open(file_path, "r", encoding="utf-8", errors='ignore') as f:
+                        content = f.read()
+                        if not self.include_comments:
+                            content = "\n".join(line for line in content.splitlines() if not line.strip().startswith('#'))
+                        if self.summary_mode:
+                            content = self._extract_summary(content, file_path)
 
-                    if self.summary_mode:
-                        # Use our improved summary extraction
-                        content = self._extract_summary(content, file_path)
+                        if self.line_numbers:
+                            lines = content.splitlines()
+                            padding = len(str(len(lines)))
+                            content = "\n".join(
+                                f"{str(i).rjust(padding)} | {line}"
+                                for i, line in enumerate(lines, 1)
+                            )
 
-                    # Format the code content using the formatter (without line numbers)
-                    formatted_content = self.formatter.format_code_content(content, file_path)
-                    
-                    # Add line numbers only if explicitly requested
-                    if self.line_numbers:
-                        lines = formatted_content.splitlines()
-                        padding = len(str(len(lines)))
-                        formatted_content = "\n".join(
-                            f"{str(i).rjust(padding)} | {line}" 
-                            for i, line in enumerate(lines, 1)
-                        )
+                        aggregated_data["files_content"][rel_file_path] = content
+                except Exception as e:
+                     aggregated_data["files_content"][rel_file_path] = f"# Error reading file {rel_file_path}: {e}\n"
 
-                    if self.count_tokens:
-                        file_tokens = self.count_text_tokens(formatted_content)
-                        total_tokens += file_tokens
-                    
-                    aggregated += formatted_content
-            except Exception as e:
-                error_msg = f"Error reading file {rel_file_path}: {e}"
-                formatted_error = self.formatter.format_error(error_msg)
-                aggregated += formatted_error
-                if self.count_tokens:
-                    total_tokens += self.count_text_tokens(formatted_error)
-        
-        # Add information about skipped files due to size limit
-        if skipped_files:
-            skipped_section = self.formatter.format_skipped_files(
-                [(path, size_mb) for path, size_mb in skipped_files]
+            # Render the custom template
+            return self.formatter.render_template(
+                aggregated_data["directory_tree"],
+                aggregated_data["files_content"],
+                aggregated_data["metadata"],
+                aggregated_data["skipped_files"],
+                aggregated_data["title"]
             )
-            aggregated += skipped_section
+
+        # Standard format processing
+        else:
+            aggregated = ""
+            total_tokens = 0
+            metadata_dict = {}
+            if self.include_metadata or self.count_tokens:
+                metadata_dict = self.collect_metadata()
+                if self.count_tokens:
+                    metadata_dict["token_model"] = self.token_model
+                    metadata_dict["total_tokens"] = "[placeholder]"
+
+                if self.include_metadata:
+                    metadata_section = self.formatter.format_metadata(metadata_dict)
+                    aggregated += metadata_section + "\n\n"
+                    if self.count_tokens:
+                        metadata_tokens = self.count_text_tokens(metadata_section)
+                        total_tokens += metadata_tokens
+
+            tree_section = self.formatter.format_directory_tree(tree)
+            aggregated += tree_section
             if self.count_tokens:
-                total_tokens += self.count_text_tokens(skipped_section)
-        
-        # Update the token count in the metadata section if needed
-        if self.count_tokens and "[placeholder]" in aggregated:
-            # Format the total tokens with thousands separator
-            formatted_token_count = f"{total_tokens:,}"
-            # Replace the placeholder with the actual count
-            aggregated = aggregated.replace("[placeholder]", formatted_token_count)
-        
-        # For HTML formats, wrap the content in a complete HTML document
-        if hasattr(self.formatter, 'get_full_html'):
-            title = f"Code Aggregation - {os.path.basename(self.directory)}"
-            aggregated = self.formatter.get_full_html(aggregated, title)
-        
-        return aggregated
+                tree_tokens = self.count_text_tokens(tree_section)
+                total_tokens += tree_tokens
+
+            for file_path in tqdm(files_to_process, desc="Aggregating files", unit="file", leave=False):
+                rel_file_path = os.path.relpath(file_path, self.directory)
+                header = self.formatter.format_file_header(rel_file_path)
+                aggregated += header
+                if self.count_tokens:
+                    total_tokens += self.count_text_tokens(header)
+
+                try:
+                    with open(file_path, "r", encoding="utf-8", errors='ignore') as f:
+                        content = f.read()
+
+                        if not self.include_comments:
+                            processed_lines = []
+                            for line in content.splitlines():
+                                code_part = line.split('#', 1)[0]
+                                if code_part.strip() or not line.strip():
+                                    processed_lines.append(code_part.rstrip())
+                            content = "\n".join(processed_lines)
+
+                        if self.summary_mode:
+                            content = self._extract_summary(content, file_path)
+
+                        formatted_content = self.formatter.format_code_content(content, file_path)
+
+                        if self.line_numbers:
+                            lines = formatted_content.splitlines()
+                            padding = len(str(len(lines)))
+                            formatted_content = "\n".join(
+                                f"{str(i).rjust(padding)} | {line}"
+                                for i, line in enumerate(lines, 1)
+                            )
+
+                        if self.count_tokens:
+                            file_tokens = self.count_text_tokens(formatted_content)
+                            total_tokens += file_tokens
+
+                        aggregated += formatted_content
+                except Exception as e:
+                    error_msg = f"Error reading file {rel_file_path}: {e}"
+                    formatted_error = self.formatter.format_error(error_msg)
+                    aggregated += formatted_error
+                    if self.count_tokens:
+                        total_tokens += self.count_text_tokens(formatted_error)
+
+            if skipped_files_data:
+                skipped_section = self.formatter.format_skipped_files(
+                    [(path, size_mb) for path, size_mb in skipped_files_data]
+                )
+                aggregated += skipped_section
+                if self.count_tokens:
+                    total_tokens += self.count_text_tokens(skipped_section)
+
+            if self.count_tokens and "[placeholder]" in aggregated:
+                formatted_token_count = f"{total_tokens:,}"
+                aggregated = aggregated.replace("[placeholder]", formatted_token_count)
+
+            if hasattr(self.formatter, 'get_full_html'):
+                title = f"Code Aggregation - {os.path.basename(self.directory)}"
+                aggregated = self.formatter.get_full_html(aggregated, title)
+
+            return aggregated
 
     def write_to_file(self, content: Optional[str] = None, filename: Optional[str] = None) -> None:
-        """Writes the aggregated content to a file."""
+        """Writes the aggregated content to a file with appropriate extension based on format."""
         content = content or self.aggregate_code()
         filename = filename or self.output_file
         
-        # If HTML format but filename doesn't have .html extension, add it
+        # Add HTML extension if needed
         if self.output_format in ["html", "highlighted"] and not filename.lower().endswith(".html"):
             root, _ = os.path.splitext(filename)
             filename = f"{root}.html"
         
-        # If Markdown format but filename doesn't have .md extension, add it
+        # Add Markdown extension if needed
         if self.output_format == "markdown" and not filename.lower().endswith((".md", ".markdown")):
             root, _ = os.path.splitext(filename)
             filename = f"{root}.md"
             
         try:
+            # Create the directory if needed
+            output_dir = os.path.dirname(filename)
+            if output_dir and not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+                
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(content)
                 
-            # Update the output_file attribute to reflect the actual filename used
+            # Update the output_file attribute to match the actual filename used
             self.output_file = filename
         except IOError as e:
             raise IOError(f"Error writing to file {filename}: {e}")
 
     def copy_to_clipboard(self, content: Optional[str] = None) -> bool:
-        """Copies the aggregated content to the clipboard across different platforms."""
+        """Copies the content to clipboard, with platform-specific handling."""
         content = content or self.aggregate_code()
         try:
             system = platform.system()
@@ -378,7 +423,7 @@ class CodeAggregator:
                 process.communicate(content.encode("utf-8"))
                 return True
             elif system == 'Linux':
-                # Try different clipboard commands available on Linux
+                # Try available clipboard commands 
                 for cmd in ['xclip -selection clipboard', 'xsel -ib']:
                     try:
                         process = subprocess.Popen(cmd.split(), stdin=subprocess.PIPE)
@@ -400,7 +445,7 @@ class CodeAggregator:
             return False
 
     def collect_metadata(self) -> dict:
-        """Collects metadata about the codebase."""
+        """Gathers stats about the codebase like lines of code and comment ratio."""
         total_lines = 0
         comment_lines = 0
         code_files = 0
@@ -450,13 +495,13 @@ class CodeAggregator:
                 file_blank_lines = 0
 
                 try:
-                    # Use tokenize for more accurate comment/code distinction
+                    # Use tokenize for better comment/code detection
                     g = tokenize.tokenize(io.BytesIO(content.encode('utf-8')).readline)
                     for token_info in g:
                         if token_info.type == tokenize.NL:
-                            continue # Handled by line iteration
+                            continue
                         elif token_info.type == tokenize.NEWLINE:
-                             processed_lines.append("") # Keep blank lines for structure if not excluding
+                             processed_lines.append("")
                              file_blank_lines += 1
                         elif token_info.type == tokenize.COMMENT:
                             if self.include_comments:
@@ -464,27 +509,24 @@ class CodeAggregator:
                             file_comment_lines += 1
                         elif token_info.type == tokenize.ENDMARKER:
                             continue
-                        else: # Code tokens (NAME, OP, NUMBER, STRING, etc.)
-                             # Reconstruct lines containing code
-                             line_num = token_info.start[0] -1 # 0-based index
+                        else:
+                             line_num = token_info.start[0] -1
                              if line_num < len(lines):
                                  current_line = lines[line_num]
-                                 # Avoid adding the same line multiple times if it has multiple tokens
                                  if not processed_lines or processed_lines[-1] != current_line:
                                      processed_lines.append(current_line)
-                                     file_code_lines += 1 # Count this line as a code line
+                                     file_code_lines += 1
 
                 except tokenize.TokenError:
-                     # Fallback for files that cannot be tokenized (e.g., non-python)
-                     # Simple line-based processing as a fallback
+                     # Fallback for non-Python files
                      for line in lines:
                          stripped_line = line.strip()
-                         is_comment = stripped_line.startswith('#') # Basic check
+                         is_comment = stripped_line.startswith('#')
                          is_blank = not stripped_line
 
                          if is_blank:
                              file_blank_lines += 1
-                             processed_lines.append(line) # Keep blank lines
+                             processed_lines.append(line)
                          elif is_comment:
                              file_comment_lines += 1
                              if self.include_comments:
@@ -504,7 +546,7 @@ class CodeAggregator:
             return f"\n# Error reading file {file_path}: {e}\n"
 
     def _extract_summary(self, content, file_path):
-        """Extracts only function/class declarations and docstrings using AST."""
+        """Extracts class/function definitions and their docstrings for a file summary."""
         try:
             tree = ast.parse(content, filename=file_path)
             summary_lines = []
@@ -542,7 +584,7 @@ class CodeAggregator:
                                 summary_lines.append(f'{indent}    """')
                         
                         if indent == "":  # Only add empty line after top-level items
-                            summary_lines.append("")  # Add empty line after each top-level function/class
+                            summary_lines.append("")
             
             # Process the main body of the module
             process_node_body(tree.body)
@@ -577,3 +619,88 @@ class CodeAggregator:
         print(f"Aggregated code written to {self.output_file}")
         if self.include_metadata:
              print("Metadata appended to the output file.")
+
+    def compare_files(self, file1: str, file2: str, output_file: Optional[str] = None, context_lines: int = 3) -> str:
+        """Compares two code files and shows their differences with clear formatting.
+        
+        Args:
+            file1: Path to the first file
+            file2: Path to the second file
+            output_file: Optional path to write the diff results to
+            context_lines: Number of context lines to include in the diff (default: 3)
+            
+        Returns:
+            String containing the formatted differences
+        """
+        # Check if files exist
+        if not os.path.exists(file1):
+            raise FileNotFoundError(f"File not found: {file1}")
+        if not os.path.exists(file2):
+            raise FileNotFoundError(f"File not found: {file2}")
+            
+        try:
+            # Read file contents
+            with open(file1, 'r', encoding='utf-8') as f:
+                content1 = f.readlines()
+            with open(file2, 'r', encoding='utf-8') as f:
+                content2 = f.readlines()
+                
+            # Generate diff
+            diff = difflib.unified_diff(
+                content1, 
+                content2,
+                fromfile=os.path.basename(file1),
+                tofile=os.path.basename(file2),
+                n=context_lines
+            )
+            
+            # Format the diff based on output format
+            diff_text = "".join(diff)
+            
+            # Add color formatting for better readability
+            colored_diff = ""
+            for line in diff_text.splitlines(True):
+                if line.startswith('+'):
+                    colored_diff += f"\033[92m{line}\033[0m"  # Green for additions
+                elif line.startswith('-'):
+                    colored_diff += f"\033[91m{line}\033[0m"  # Red for deletions
+                elif line.startswith('^'):
+                    colored_diff += f"\033[36m{line}\033[0m"  # Cyan for change indicators
+                elif line.startswith('@@'):
+                    colored_diff += f"\033[94m{line}\033[0m"  # Blue for chunk headers
+                else:
+                    colored_diff += line
+                    
+            # Write to output file if specified
+            if output_file:
+                with open(output_file, 'w', encoding='utf-8') as f:
+                    f.write(diff_text)
+                return f"Diff written to {output_file}"
+                
+            return colored_diff
+            
+        except IOError as e:
+            raise IOError(f"Error reading or writing files: {e}")
+        except Exception as e:
+            raise Exception(f"Error comparing files: {e}")
+
+    def compare_runs(self, prev_output: str, current_output: Optional[str] = None, 
+                     output_file: Optional[str] = None, context_lines: int = 3) -> str:
+        """Compares the current aggregation run with a previous one.
+        
+        Args:
+            prev_output: Path to the previous aggregation output file
+            current_output: Path to the current output file (defaults to self.output_file)
+            output_file: Optional path to write the diff results to
+            context_lines: Number of context lines to include in the diff
+            
+        Returns:
+            String containing the formatted differences
+        """
+        current = current_output or self.output_file
+        
+        # Generate the current output file if it doesn't exist yet
+        if not os.path.exists(current):
+            self.write_to_file(filename=current)
+            
+        return self.compare_files(prev_output, current, output_file, context_lines)

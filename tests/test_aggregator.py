@@ -6,16 +6,21 @@ import pytest
 from unittest import mock
 import platform
 
-from PromptPrep.aggregator import CodeAggregator, DirectoryTreeGenerator
+from promptprep.aggregator import CodeAggregator, DirectoryTreeGenerator
 
-# Helper function to run CLI script
 def run_script(args, cwd):
-    cmd = [sys.executable, os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "PromptPrep", "cli.py")] + args
+    """Runs our CLI script and returns its output for testing."""
+    cmd = [sys.executable, "-m", "promptprep.cli"] + args
+    print(f"Running command: {' '.join(cmd)}")
+    print(f"Working directory: {cwd}")
     result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
+    print(f"Exit code: {result.returncode}")
+    print(f"Standard output: {result.stdout}")
+    print(f"Error output: {result.stderr}")
     return result
 
 def test_default_output():
-    """Test default output file creation."""
+    """Makes sure we can create an output file using default settings."""
     with tempfile.TemporaryDirectory() as tmpdir:
         run_script(["-d", tmpdir], cwd=tmpdir)
         output_file = os.path.join(tmpdir, "full_code.txt")
@@ -23,7 +28,7 @@ def test_default_output():
 
 
 def test_specified_directory():
-    """Test with specified directory."""
+    """Verifies we can process files from any directory we choose."""
     with tempfile.TemporaryDirectory() as src_dir:
         dummy_file = os.path.join(src_dir, "dummy.py")
         with open(dummy_file, "w", encoding="utf-8") as f:
@@ -37,7 +42,7 @@ def test_specified_directory():
 
 
 def test_include_files():
-    """Test include_files parameter."""
+    """Checks if we only process the specific files we ask for."""
     with tempfile.TemporaryDirectory() as tmpdir:
         file1 = os.path.join(tmpdir, "include_me.py")
         file2 = os.path.join(tmpdir, "ignore_me.py")
@@ -55,7 +60,7 @@ def test_include_files():
 
 
 def test_extensions():
-    """Test extensions parameter."""
+    """Verifies we only process files with the extensions we want."""
     with tempfile.TemporaryDirectory() as tmpdir:
         py_file = os.path.join(tmpdir, "dummy.py")
         txt_file = os.path.join(tmpdir, "dummy.txt")
@@ -73,7 +78,7 @@ def test_extensions():
 
 
 def test_exclude_dirs():
-    """Test exclude_dirs parameter."""
+    """Makes sure we properly skip directories we want to exclude."""
     with tempfile.TemporaryDirectory() as tmpdir:
         exclude_dir = os.path.join(tmpdir, "exclude_this")
         os.mkdir(exclude_dir)
