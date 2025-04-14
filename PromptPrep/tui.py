@@ -1,8 +1,15 @@
 """A friendly terminal interface for choosing which files to process."""
-import curses
 import os
 import sys
 from typing import List, Set, Tuple, Dict, Optional
+
+if sys.platform == "win32":
+    # Raise ImportError immediately if on Windows
+    # This prevents the rest of the file (and the curses import) from executing
+    raise ImportError("promptprep.tui (curses module) is not supported on Windows.")
+else:
+    # Import curses only if not on Windows
+    import curses
 
 class FileSelector:
     """Lets you browse and select files using arrow keys and spacebar."""

@@ -7,7 +7,7 @@ name = "promptprep"
 version = "0.1.3"
 description = "A code aggregator tool for consolidating code files into a single file with an ASCII directory tree."
 authors = [{ name = "Kartik Mandar", email = "kartik4321mandar@gmail.com" }]
-license = { file = "LICENSE" }
+license = { text = "MIT" }
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = ["tqdm", "tiktoken"]
@@ -75,5 +75,7 @@ filename = "pyproject.toml"
 search = 'version = "{current_version}"'
 replace = 'version = "{new_version}"'
 
-[tool.setuptools]
-packages = ["promptprep"]
+[tool.setuptools.packages.find]
+where = ["promptprep"]
+include = ["*"]
+exclude = ["tests*"]
