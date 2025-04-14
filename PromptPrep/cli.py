@@ -2,8 +2,18 @@ import argparse
 import os
 import sys
 from promptprep.aggregator import CodeAggregator
-from promptprep.tui import select_files_interactive
 from promptprep.config import ConfigManager
+
+if sys.platform != "win32":
+    # Import TUI function only if not on Windows
+    from promptprep.tui import select_files_interactive
+else:
+    # Define a dummy function for Windows
+    # It should match the signature and return type of the real one
+    def select_files_interactive(directory: str) -> tuple[set[str], set[str], bool]:
+        print("Error: Interactive mode is not supported on Windows.", file=sys.stderr)
+        # Return values indicating cancellation/no selection
+        return set(), set(), False
 
 def parse_arguments() -> argparse.Namespace:
     """Sets up and handles command-line interface options for the code aggregation tool."""
