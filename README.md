@@ -1,7 +1,7 @@
 PromptPrep
 ==========
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Python Version](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Python Version](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/) [![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg)](https://promptprep.readthedocs.io/en/latest/index.html) [![PyPI](https://img.shields.io/pypi/v/promptprep)](https://pypi.org/project/promptprep/#description)
 
 Table of Contents
 -----------------
@@ -12,7 +12,9 @@ Table of Contents
   - [Features](#features)
   - [Installation](#installation)
     - [Prerequisites](#prerequisites)
+    - [From PyPI (Recommended)](#from-pypi-recommended)
     - [From Source](#from-source)
+    - [Optional Dependencies](#optional-dependencies)
   - [Usage](#usage)
     - [Basic Command](#basic-command)
     - [Common Options](#common-options)
@@ -23,12 +25,6 @@ Table of Contents
     - [Content Processing](#content-processing)
     - [Output Formatting](#output-formatting)
     - [Incremental Processing](#incremental-processing)
-    - [File Comparison (Diff)](#file-comparison-diff)
-    - [Configuration Management](#configuration-management)
-    - [Saving Configuration](#saving-configuration)
-    - [Loading Configuration](#loading-configuration)
-    - [Default Location](#default-location)
-  - [Key Concepts Explained](#key-concepts-explained)
     - [File Aggregation](#file-aggregation)
     - [Directory Tree](#directory-tree)
     - [Interactive Mode (TUI)](#interactive-mode-tui)
@@ -43,10 +39,11 @@ Table of Contents
     - [Using Custom Templates](#using-custom-templates)
     - [Available Placeholders](#available-placeholders)
     - [Example Template](#example-template)
-  - [Configuration Management](#configuration-management-1)
-    - [Saving Configuration](#saving-configuration-1)
-    - [Loading Configuration](#loading-configuration-1)
-    - [Default Location](#default-location-1)
+  - [Configuration Management](#configuration-management)
+    - [Saving Configuration](#saving-configuration)
+    - [Loading Configuration](#loading-configuration)
+    - [Default Location](#default-location)
+  - [Documentation](#documentation)
   - [Testing](#testing)
   - [Contributing](#contributing)
   - [License](#license)
@@ -102,14 +99,24 @@ Installation
 ### Prerequisites
 
 You'll need:
-* Python 3.7 or higher
+* Python 3.10 or higher
 * pip (the Python package installer)
+
+### From PyPI (Recommended)
+
+The easiest way to install promptprep is from PyPI using pip:
+
+```bash
+pip install promptprep
+```
+
+This will install the latest stable version of promptprep and its required dependencies.
 
 ### From Source
 
 1. **Get the code:**
     ```bash
-    git clone https://github.com/kartikmandar/PromptPrep
+    git clone https://github.com/kartikmandar/promptprep
     cd promptprep
     ```
 
@@ -125,6 +132,45 @@ You'll need:
     ```
     This way your changes take effect immediately without reinstalling.
 
+### Optional Dependencies
+
+promptprep has optional features that require additional dependencies:
+
+1. **Syntax Highlighting:**
+   ```bash
+   pip install promptprep[highlighting]
+   ```
+   Or if installing from source:
+   ```bash
+   pip install .[highlighting]
+   ```
+
+2. **Development Tools:**
+   ```bash
+   pip install promptprep[dev]
+   ```
+   Or if installing from source:
+   ```bash
+   pip install .[dev]
+   ```
+
+3. **Documentation Tools:**
+   ```bash
+   pip install promptprep[docs]
+   ```
+   Or if installing from source:
+   ```bash
+   pip install .[docs]
+   ```
+
+4. **All Optional Dependencies:**
+   ```bash
+   pip install promptprep[all]
+   ```
+   Or if installing from source:
+   ```bash
+   pip install .[all]
+   ```
 
 Usage
 -----
@@ -231,58 +277,6 @@ Here's the complete toolkit of options you can use with PromptPrep:
 ### Incremental Processing
 
 * `--incremental`: Only process files that have changed since last run
-* `--last-run-timestamp TS`: When was the last run? (Unix timestamp, like `1678886400.0`)
-
-### File Comparison (Diff)
-
-* `--diff PREV_FILE`: Compare with a previous output file and show what changed
-* `--diff-context LINES`: How many unchanged lines to show around changes (default: 3)
-* `--diff-output FILE`: Save the diff to a file instead of showing on screen
-
-### Configuration Management
-
-Tired of typing the same options every time? Save your favorite settings for quick reuse!
-
-### Saving Configuration
-
-Just add the `--save-config` flag to any command:
-
-* **Save to the default location:**
-  ```bash
-  promptprep -d ./my_project --summary-mode --metadata --save-config
-  ```
-  This stores your settings in `~/.promptprep/config.json`
-
-* **Save to a custom file:**
-  ```bash
-  promptprep -d ./my_project --format markdown --save-config my_settings.json
-  ```
-
-When you use `--save-config` on its own, PromptPrep will save your settings and then exit.
-
-### Loading Configuration
-
-Use the `--load-config` flag to apply saved settings. You can still add new options to override specific settings:
-
-* **Load from the default location:**
-  ```bash
-  promptprep --load-config -o new_output.txt
-  ```
-  This loads from `~/.promptprep/config.json` but uses a different output file
-
-* **Load from a custom file:**
-  ```bash
-  promptprep --load-config my_settings.json
-  ```
-
-### Default Location
-
-PromptPrep stores configurations in `~/.promptprep/config.json` unless you specify another path.
-
-Key Concepts Explained
-----------------------
-
-Let me walk you through the main ideas behind PromptPrep:
 
 ### File Aggregation
 
@@ -458,6 +452,18 @@ Use the `--load-config` flag to apply saved settings. You can still add new opti
 
 PromptPrep stores configurations in `~/.promptprep/config.json` unless you specify another path.
 
+Documentation
+------------
+
+Comprehensive documentation is available at [promptprep.readthedocs.io](https://promptprep.readthedocs.io/en/latest/index.html). The documentation includes:
+
+* [Quickstart Guide](https://promptprep.readthedocs.io/en/latest/quickstart.html)
+* [Detailed Usage Instructions](https://promptprep.readthedocs.io/en/latest/usage.html)
+* [Command Reference](https://promptprep.readthedocs.io/en/latest/command_reference.html)
+* [Output Formats](https://promptprep.readthedocs.io/en/latest/output_formats.html)
+* [API Reference](https://promptprep.readthedocs.io/en/latest/api/modules.html)
+* [Tips and Tricks](https://promptprep.readthedocs.io/en/latest/tips_and_tricks.html)
+
 Testing
 -------
 
@@ -486,6 +492,8 @@ I'd love your help making PromptPrep even better! Here's how you can contribute:
 9. Create a **Pull Request** so I can review your changes
 
 Your code should follow the project's style and include proper documentation and tests. If you're not sure where to start, check out the open issues!
+
+For more detailed information on contributing, see the [Contributing Guide](https://promptprep.readthedocs.io/en/latest/contributing.html).
 
 License
 -------
