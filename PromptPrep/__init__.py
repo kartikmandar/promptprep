@@ -1,5 +1,29 @@
 from .aggregator import CodeAggregator, DirectoryTreeGenerator
-from .tui import select_files_interactive, FileSelector
+# Conditionally import TUI components based on platform
+import platform
+import sys
+
+# Don't attempt to import TUI on Windows
+if platform.system() != "Windows":
+    try:
+        from .tui import select_files_interactive, FileSelector
+    except ImportError:
+        # Define empty placeholders if import fails
+        def select_files_interactive(*args, **kwargs):
+            raise NotImplementedError("TUI not available on this platform")
+        
+        class FileSelector:
+            def __init__(self, *args, **kwargs):
+                raise NotImplementedError("TUI not available on this platform")
+else:
+    # Define empty placeholders for Windows
+    def select_files_interactive(*args, **kwargs):
+        raise NotImplementedError("TUI not supported on Windows")
+    
+    class FileSelector:
+        def __init__(self, *args, **kwargs):
+            raise NotImplementedError("TUI not supported on Windows")
+
 from .formatters import (
     BaseFormatter,
     PlainTextFormatter,
