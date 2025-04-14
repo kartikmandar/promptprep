@@ -215,9 +215,10 @@ def valid_function():
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create a file that will cause a tokenize error
             file_path = os.path.join(tmpdir, "test.py")
-            with open(file_path, "w") as f:
-                # Unicode error will cause tokenize error
-                f.write('print("hello")\n\x80invalid')
+            with open(file_path, "wb") as f:
+                # Use bytes directly to avoid encoding issues on all platforms
+                # Including a null byte which will cause tokenize to fail
+                f.write(b'print("hello")\n\x00invalid')
                 
             aggregator = CodeAggregator(directory=tmpdir)
             

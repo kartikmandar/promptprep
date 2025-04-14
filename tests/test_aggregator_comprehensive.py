@@ -200,19 +200,32 @@ class TestCodeAggregator:
         
     def test_should_include(self):
         """Test file inclusion logic."""
-        aggregator = CodeAggregator(
-            directory="/base/dir",
-            include_files={"src/include.py", "lib/util.js"}
-        )
-        
-        # When include_files is specified, only those files should be included
-        assert aggregator.should_include("/base/dir/src/include.py") is True
-        assert aggregator.should_include("/base/dir/lib/util.js") is True
-        assert aggregator.should_include("/base/dir/other.py") is False
-        
-        # When include_files is empty, all files should be included
-        aggregator.include_files = set()
-        assert aggregator.should_include("/base/dir/other.py") is True
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base_dir = tmpdir
+            include_py = os.path.join("src", "include.py")
+            util_js = os.path.join("lib", "util.js")
+            other_py = "other.py"
+            
+            # Create the files to ensure paths exist
+            os.makedirs(os.path.join(base_dir, "src"), exist_ok=True)
+            os.makedirs(os.path.join(base_dir, "lib"), exist_ok=True)
+            open(os.path.join(base_dir, include_py), "w").close()
+            open(os.path.join(base_dir, util_js), "w").close()
+            open(os.path.join(base_dir, other_py), "w").close()
+            
+            aggregator = CodeAggregator(
+                directory=base_dir,
+                include_files={include_py, util_js}
+            )
+            
+            # When include_files is specified, only those files should be included
+            assert aggregator.should_include(os.path.join(base_dir, include_py)) is True
+            assert aggregator.should_include(os.path.join(base_dir, util_js)) is True
+            assert aggregator.should_include(os.path.join(base_dir, other_py)) is False
+            
+            # When include_files is empty, all files should be included
+            aggregator.include_files = set()
+            assert aggregator.should_include(os.path.join(base_dir, other_py)) is True
         
     def test_is_file_size_within_limit(self):
         """Test file size limit check."""

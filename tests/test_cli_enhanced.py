@@ -7,6 +7,9 @@ from io import StringIO
 
 from promptprep.cli import parse_arguments, main
 
+# Skip TUI tests on Windows
+SKIP_ON_WINDOWS = pytest.mark.skipif(sys.platform == "win32", 
+                                      reason="TUI tests not supported on Windows")
 
 class TestCliEnhanced:
     """Enhanced tests for CLI functionality."""
@@ -89,6 +92,7 @@ class TestCliEnhanced:
                 # Check that appropriate message was printed
                 assert "Failed to copy" in mock_stderr.getvalue() or "Failed to copy" in mock_stdout.getvalue()
 
+    @SKIP_ON_WINDOWS
     def test_main_with_interactive_mode(self):
         """Test the main function with interactive file selection."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -115,6 +119,7 @@ class TestCliEnhanced:
                     
                 assert success
 
+    @SKIP_ON_WINDOWS
     def test_main_with_interactive_mode_cancel(self):
         """Test the main function when interactive selection is cancelled."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -134,6 +139,7 @@ class TestCliEnhanced:
                 # Should print appropriate message
                 assert "selection canceled" in mock_stdout.getvalue()
 
+    @SKIP_ON_WINDOWS
     def test_main_with_interactive_mode_error(self):
         """Test the main function when interactive selection fails."""
         with tempfile.TemporaryDirectory() as tmpdir:

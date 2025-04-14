@@ -186,7 +186,8 @@ class TestIncrementalProcessing:
             # Write some content
             tmp.write(b"test content")
             tmp_path = tmp.name
-            
+        
+        try:
             # Set specific modification time
             mod_time = time.time() - 1000
             os.utime(tmp_path, (mod_time, mod_time))
@@ -198,16 +199,21 @@ class TestIncrementalProcessing:
             
             # Allow for slight differences due to filesystem precision
             assert abs(result - mod_time) < 1
-            
-            # Clean up
-            os.unlink(tmp_path)
+        finally:
+            # Clean up - but allow for the file to be already deleted or in use
+            try:
+                if os.path.exists(tmp_path):
+                    os.unlink(tmp_path)
+            except (PermissionError, OSError):
+                pass  # Ignore errors on Windows
             
     def test_is_file_changed(self):
         """Test the _is_file_changed method with different scenarios."""
         with tempfile.NamedTemporaryFile(delete=False) as tmp:
             tmp.write(b"test content")
             tmp_path = tmp.name
-            
+        
+        try:
             # Set specific modification time
             old_time = time.time() - 1000
             os.utime(tmp_path, (old_time, old_time))
@@ -227,9 +233,13 @@ class TestIncrementalProcessing:
             # Test with file newer than timestamp
             aggregator4 = CodeAggregator(incremental=True, last_run_timestamp=old_time - 500)
             assert aggregator4._is_file_changed(tmp_path) is True
-            
-            # Clean up
-            os.unlink(tmp_path)
+        finally:
+            # Clean up - but allow for the file to be already deleted or in use
+            try:
+                if os.path.exists(tmp_path):
+                    os.unlink(tmp_path)
+            except (PermissionError, OSError):
+                pass  # Ignore errors on Windows
 
     def test_file_mod_times_tracking(self):
         """Test that file modification times are correctly tracked."""
