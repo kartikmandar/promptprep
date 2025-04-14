@@ -20,6 +20,7 @@ print(f"Project root added to path: {project_root}")
 # Check if module is importable after adding to path
 try:
     import promptprep
+
     print(f"Successfully imported promptprep from {promptprep.__file__}")
 except ImportError as e:
     print(f"Failed to import promptprep: {e}")
@@ -27,7 +28,7 @@ except ImportError as e:
     print(f"Contents of {project_root}:")
     for item in os.listdir(project_root):
         print(f"  - {item}")
-    
+
     if os.path.exists(os.path.join(project_root, "promptprep")):
         print("promptprep directory exists, listing contents:")
         for item in os.listdir(os.path.join(project_root, "promptprep")):

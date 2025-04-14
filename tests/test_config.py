@@ -27,12 +27,12 @@ def test_args_to_dict():
         format="markdown",
         line_numbers=True,
         save_config=None,
-        load_config=None
+        load_config=None,
     )
-    
+
     # Convert to dictionary
     config_dict = ConfigManager._args_to_dict(args)
-    
+
     # Check conversion
     assert config_dict["directory"] == "/test/dir"
     assert config_dict["output_file"] == "output.txt"
@@ -58,7 +58,7 @@ def test_save_and_load_config():
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create a config file path
         config_file = os.path.join(temp_dir, "test_config.json")
-        
+
         # Create sample arguments
         args = argparse.Namespace(
             directory="/test/dir",
@@ -76,17 +76,17 @@ def test_save_and_load_config():
             format="plain",
             line_numbers=False,
             save_config=None,
-            load_config=None
+            load_config=None,
         )
-        
+
         # Save config
         saved_path = ConfigManager.save_config(args, config_file)
         assert saved_path == config_file
         assert os.path.exists(config_file)
-        
+
         # Load config
         loaded_config = ConfigManager.load_config(config_file)
-        
+
         # Check loaded values
         assert loaded_config["directory"] == "/test/dir"
         assert loaded_config["output_file"] == "output.txt"
@@ -110,9 +110,9 @@ def test_apply_config_to_args():
         "max_file_size": 75.0,
         "interactive": True,
         "summary_mode": False,
-        "include_comments": False
+        "include_comments": False,
     }
-    
+
     # Create args with some different values
     args = argparse.Namespace(
         directory="/cli/dir",
@@ -130,12 +130,12 @@ def test_apply_config_to_args():
         format="plain",
         line_numbers=False,
         save_config=None,
-        load_config=None
+        load_config=None,
     )
-    
+
     # Apply config to args
     updated_args = ConfigManager.apply_config_to_args(config_dict, args)
-    
+
     # Check the values were updated
     assert updated_args.directory == "/config/dir"
     assert updated_args.output_file == "config_output.txt"
@@ -146,7 +146,7 @@ def test_apply_config_to_args():
     assert updated_args.interactive is True
     assert updated_args.summary_mode is False
     assert updated_args.include_comments is False
-    
+
     # Check that fields not in config were left untouched
     assert updated_args.metadata is False
     assert updated_args.count_tokens is False
@@ -163,18 +163,19 @@ def test_load_nonexistent_config():
 
 def test_default_config_location():
     """Verifies we create and use the default config location correctly."""
-    with mock.patch('os.makedirs') as mock_makedirs:
-        with mock.patch('os.path.exists', return_value=False):
-            with mock.patch('builtins.open', mock.mock_open()) as mock_file:
-                with mock.patch('json.dump') as mock_json_dump:
+    with mock.patch("os.makedirs") as mock_makedirs:
+        with mock.patch("os.path.exists", return_value=False):
+            with mock.patch("builtins.open", mock.mock_open()) as mock_file:
+                with mock.patch("json.dump") as mock_json_dump:
                     # Create sample arguments
                     args = argparse.Namespace(
-                        directory=os.getcwd(),
-                        output_file="output.txt"
+                        directory=os.getcwd(), output_file="output.txt"
                     )
-                    
+
                     # Save config to default location
                     ConfigManager.save_config(args)
-                    
+
                     # Check that the directory was created
-                    mock_makedirs.assert_called_once_with(ConfigManager.DEFAULT_CONFIG_DIR, exist_ok=True)
+                    mock_makedirs.assert_called_once_with(
+                        ConfigManager.DEFAULT_CONFIG_DIR, exist_ok=True
+                    )

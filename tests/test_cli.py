@@ -12,7 +12,12 @@ import json
 
 def run_script(args, cwd):
     """Helps us test the CLI by running it and capturing what it does."""
-    cmd = [sys.executable, os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "promptprep", "cli.py")]
+    cmd = [
+        sys.executable,
+        os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), "..", "promptprep", "cli.py"
+        ),
+    ]
     print(f"Running command: {' '.join(cmd)}")
     print(f"Working directory: {cwd}")
     result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
@@ -20,6 +25,7 @@ def run_script(args, cwd):
     print(f"Standard output: {result.stdout}")
     print(f"Error output: {result.stderr}")
     return result
+
 
 # Import the CLI module functions directly for testing
 from promptprep.cli import parse_arguments, main
@@ -30,7 +36,7 @@ from promptprep.config import ConfigManager
 def test_parse_arguments():
     """Makes sure we understand all command-line arguments correctly."""
     # Test with no args (default values)
-    with mock.patch.object(sys, 'argv', ['promptprep']):
+    with mock.patch.object(sys, "argv", ["promptprep"]):
         args = parse_arguments()
         assert args.directory == os.getcwd()
         assert args.output_file == "full_code.txt"
@@ -39,7 +45,9 @@ def test_parse_arguments():
     # Test with directory and output file
     test_dir = "/test/dir"
     test_output = "output.txt"
-    with mock.patch.object(sys, 'argv', ['promptprep', '-d', test_dir, '-o', test_output]):
+    with mock.patch.object(
+        sys, "argv", ["promptprep", "-d", test_dir, "-o", test_output]
+    ):
         args = parse_arguments()
         assert args.directory == test_dir
         assert args.output_file == test_output
@@ -79,11 +87,14 @@ def test_main_file_output():
         args_mock.prev_file = None  # Add this to prevent the Mock object issue
 
         # Mock parse_arguments to return our args
-        with mock.patch('promptprep.cli.parse_arguments', return_value=args_mock):
+        with mock.patch("promptprep.cli.parse_arguments", return_value=args_mock):
             # Capture stdout
-            with mock.patch('sys.stdout', new=StringIO()) as fake_out:
+            with mock.patch("sys.stdout", new=StringIO()) as fake_out:
                 main()
-                assert f"Aggregated file '{args_mock.output_file}' created successfully." in fake_out.getvalue()
+                assert (
+                    f"Aggregated file '{args_mock.output_file}' created successfully."
+                    in fake_out.getvalue()
+                )
 
                 # Check if file was created
                 output_path = os.path.join(os.getcwd(), args_mock.output_file)
@@ -118,9 +129,11 @@ def test_main_with_invalid_directory():
     args_mock.last_run_timestamp = None
     args_mock.prev_file = None
 
-    with mock.patch('promptprep.cli.parse_arguments', return_value=args_mock), \
-         mock.patch('sys.stderr', new=StringIO()) as fake_err, \
-         pytest.raises(SystemExit) as excinfo:
+    with mock.patch(
+        "promptprep.cli.parse_arguments", return_value=args_mock
+    ), mock.patch("sys.stderr", new=StringIO()) as fake_err, pytest.raises(
+        SystemExit
+    ) as excinfo:
         main()
         assert "Error: Directory not found" in fake_err.getvalue()
         assert excinfo.value.code == 1
@@ -129,23 +142,27 @@ def test_main_with_invalid_directory():
 def test_parse_arguments_config_options():
     """Makes sure our config-related arguments work as expected."""
     # Test save config (default location)
-    with mock.patch.object(sys, 'argv', ['promptprep', '--save-config']):
+    with mock.patch.object(sys, "argv", ["promptprep", "--save-config"]):
         args = parse_arguments()
         assert args.save_config == "default"
-    
+
     # Test save config (custom location)
     custom_location = "/path/to/config.json"
-    with mock.patch.object(sys, 'argv', ['promptprep', '--save-config', custom_location]):
+    with mock.patch.object(
+        sys, "argv", ["promptprep", "--save-config", custom_location]
+    ):
         args = parse_arguments()
         assert args.save_config == custom_location
-    
+
     # Test load config (default location)
-    with mock.patch.object(sys, 'argv', ['promptprep', '--load-config']):
+    with mock.patch.object(sys, "argv", ["promptprep", "--load-config"]):
         args = parse_arguments()
         assert args.load_config == "default"
-    
+
     # Test load config (custom location)
-    with mock.patch.object(sys, 'argv', ['promptprep', '--load-config', custom_location]):
+    with mock.patch.object(
+        sys, "argv", ["promptprep", "--load-config", custom_location]
+    ):
         args = parse_arguments()
         assert args.load_config == custom_location
 
@@ -154,7 +171,7 @@ def test_main_save_config():
     """Verifies we can save our settings to a config file."""
     with tempfile.TemporaryDirectory() as temp_dir:
         config_path = os.path.join(temp_dir, "test_config.json")
-        
+
         # Mock the arguments
         test_args = argparse.Namespace(
             directory=temp_dir,
@@ -174,25 +191,32 @@ def test_main_save_config():
             save_config=config_path,
             load_config=None,
             clipboard=False,
-            template_file=None
+            template_file=None,
         )
-        
+
         # Mock parse_arguments to return our test args
-        with mock.patch('promptprep.cli.parse_arguments', return_value=test_args):
+        with mock.patch("promptprep.cli.parse_arguments", return_value=test_args):
             # Mock the save_config method
-            with mock.patch('promptprep.config.ConfigManager.save_config', return_value=config_path) as mock_save:
+            with mock.patch(
+                "promptprep.config.ConfigManager.save_config", return_value=config_path
+            ) as mock_save:
                 # Mock sys.argv to simulate only --save-config argument
-                with mock.patch.object(sys, 'argv', ['promptprep', '--save-config', config_path]):
+                with mock.patch.object(
+                    sys, "argv", ["promptprep", "--save-config", config_path]
+                ):
                     # Capture stdout
-                    with mock.patch('sys.stdout', new=StringIO()) as fake_stdout:
+                    with mock.patch("sys.stdout", new=StringIO()) as fake_stdout:
                         main()
-                        
+
                         # Check that config was saved
                         mock_save.assert_called_once()
-                        
+
                         # Check output message
-                        assert f"Configuration saved to '{config_path}'" in fake_stdout.getvalue()
-                        
+                        assert (
+                            f"Configuration saved to '{config_path}'"
+                            in fake_stdout.getvalue()
+                        )
+
                         # Check that we didn't proceed to file aggregation
                         assert "Aggregated file" not in fake_stdout.getvalue()
 
@@ -212,12 +236,12 @@ def test_main_load_config():
             "interactive": False,
             "summary_mode": True,
             "include_comments": False,
-            "template_file": None
+            "template_file": None,
         }
-        
-        with open(config_path, 'w') as f:
+
+        with open(config_path, "w") as f:
             json.dump(test_config, f)
-        
+
         # Create initial args (before loading config)
         initial_args = argparse.Namespace(
             directory=os.getcwd(),  # Different from config
@@ -241,11 +265,11 @@ def test_main_load_config():
             # Add missing attributes
             incremental=False,
             last_run_timestamp=None,
-            prev_file=None
+            prev_file=None,
         )
-        
+
         # Mock parse_arguments to return initial args
-        with mock.patch('promptprep.cli.parse_arguments', return_value=initial_args):
+        with mock.patch("promptprep.cli.parse_arguments", return_value=initial_args):
             # Create a merged args object that would result from loading the config
             merged_args = argparse.Namespace(**vars(initial_args))
             merged_args.directory = test_config["directory"]
@@ -256,60 +280,77 @@ def test_main_load_config():
             merged_args.max_file_size = test_config["max_file_size"]
             merged_args.summary_mode = test_config["summary_mode"]
             merged_args.include_comments = test_config["include_comments"]
-            
+
             # Mock the load_config and apply_config methods
-            with mock.patch('promptprep.config.ConfigManager.load_config', 
-                           return_value=test_config) as mock_load:
-                with mock.patch('promptprep.config.ConfigManager.apply_config_to_args', 
-                               return_value=merged_args) as mock_apply:
+            with mock.patch(
+                "promptprep.config.ConfigManager.load_config", return_value=test_config
+            ) as mock_load:
+                with mock.patch(
+                    "promptprep.config.ConfigManager.apply_config_to_args",
+                    return_value=merged_args,
+                ) as mock_apply:
                     # Mock CodeAggregator to avoid actual file operations
                     mock_instance = mock.Mock()
                     mock_instance.write_to_file.return_value = None
-                    
-                    with mock.patch('promptprep.cli.CodeAggregator', 
-                                   return_value=mock_instance) as mock_aggregator:
+
+                    with mock.patch(
+                        "promptprep.cli.CodeAggregator", return_value=mock_instance
+                    ) as mock_aggregator:
                         # Capture stdout
-                        with mock.patch('sys.stdout', new=StringIO()) as fake_stdout:
+                        with mock.patch("sys.stdout", new=StringIO()) as fake_stdout:
                             # Call the main function
                             main()
-                            
+
                             # Check that the configuration was loaded
-                            assert f"Configuration loaded from '{config_path}'" in fake_stdout.getvalue()
-                            
+                            assert (
+                                f"Configuration loaded from '{config_path}'"
+                                in fake_stdout.getvalue()
+                            )
+
                             # Check that CodeAggregator was called with the merged args
                             mock_aggregator.assert_called_once()
                             call_args = mock_aggregator.call_args[1]
                             assert call_args["directory"] == test_config["directory"]
-                            assert call_args["output_file"] == test_config["output_file"]
-                            assert call_args["include_files"] == {test_config["include_files"]}
-                            assert call_args["summary_mode"] == test_config["summary_mode"]
-                            assert call_args["include_comments"] == test_config["include_comments"]
+                            assert (
+                                call_args["output_file"] == test_config["output_file"]
+                            )
+                            assert call_args["include_files"] == {
+                                test_config["include_files"]
+                            }
+                            assert (
+                                call_args["summary_mode"] == test_config["summary_mode"]
+                            )
+                            assert (
+                                call_args["include_comments"]
+                                == test_config["include_comments"]
+                            )
 
 
 def test_load_nonexistent_config_in_main():
     """Checks that we handle missing config files without crashing."""
     nonexistent_path = "/path/to/nonexistent/config.json"
-    
+
     # Create args with load_config pointing to non-existent file
     args = argparse.Namespace(
         load_config=nonexistent_path,
         # Other args not relevant for this test
     )
-    
+
     # Mock parse_arguments
-    with mock.patch('promptprep.cli.parse_arguments', return_value=args):
+    with mock.patch("promptprep.cli.parse_arguments", return_value=args):
         # Mock load_config to raise FileNotFoundError
         error_msg = f"Configuration file '{nonexistent_path}' not found."
-        with mock.patch('promptprep.config.ConfigManager.load_config', 
-                       side_effect=FileNotFoundError(error_msg)):
+        with mock.patch(
+            "promptprep.config.ConfigManager.load_config",
+            side_effect=FileNotFoundError(error_msg),
+        ):
             # Redirect stderr and catch SystemExit
-            with mock.patch('sys.stderr', new=StringIO()) as fake_stderr:
+            with mock.patch("sys.stderr", new=StringIO()) as fake_stderr:
                 with pytest.raises(SystemExit) as exc_info:
                     main()
-                
+
                 # Check exit code
                 assert exc_info.value.code == 1
-                
+
                 # Check error message
                 assert f"Error: {error_msg}" in fake_stderr.getvalue()
-

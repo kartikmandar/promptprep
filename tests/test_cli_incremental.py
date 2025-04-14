@@ -9,20 +9,24 @@ import sys
 from promptprep.cli import parse_arguments, main
 from promptprep.aggregator import CodeAggregator
 
+
 def test_incremental_args_parsing():
     """Checks if we properly handle incremental processing arguments."""
     # Test with incremental flag
-    with mock.patch.object(sys, 'argv', ['promptprep', '--incremental']):
+    with mock.patch.object(sys, "argv", ["promptprep", "--incremental"]):
         args = parse_arguments()
         assert args.incremental is True
         assert args.last_run_timestamp is None
-    
+
     # Test with timestamp
     timestamp = "1620000000"
-    with mock.patch.object(sys, 'argv', ['promptprep', '--incremental', '--last-run-timestamp', timestamp]):
+    with mock.patch.object(
+        sys, "argv", ["promptprep", "--incremental", "--last-run-timestamp", timestamp]
+    ):
         args = parse_arguments()
         assert args.incremental is True
         assert args.last_run_timestamp == float(timestamp)
+
 
 def test_main_with_incremental():
     """Verifies that incremental processing works as expected."""
@@ -31,7 +35,7 @@ def test_main_with_incremental():
         test_file = os.path.join(tmpdir, "test.py")
         with open(test_file, "w") as f:
             f.write('print("Hello World")')
-        
+
         # Mock args with incremental mode
         args_mock = mock.Mock()
         args_mock.incremental = True
@@ -57,23 +61,25 @@ def test_main_with_incremental():
         args_mock.prev_file = None
         args_mock.diff_output = None
         args_mock.diff_context = 3
-        
+
         # Mock the CodeAggregator constructor
         mock_constructor = mock.Mock(return_value=mock.Mock())
-        
-        with mock.patch('promptprep.cli.parse_arguments', return_value=args_mock), \
-             mock.patch('promptprep.cli.CodeAggregator', mock_constructor), \
-             mock.patch('sys.stdout', new=StringIO()) as fake_stdout:
-            
+
+        with mock.patch(
+            "promptprep.cli.parse_arguments", return_value=args_mock
+        ), mock.patch("promptprep.cli.CodeAggregator", mock_constructor), mock.patch(
+            "sys.stdout", new=StringIO()
+        ) as fake_stdout:
             main()
-            
+
             # Verify CodeAggregator was created with incremental=True
             _, kwargs = mock_constructor.call_args
             assert kwargs["incremental"] is True
             assert kwargs["last_run_timestamp"] == args_mock.last_run_timestamp
-            
+
             # Verify some output was generated
             assert "created successfully" in fake_stdout.getvalue()
+
 
 def test_main_with_incremental_no_timestamp():
     """Makes sure we handle incremental mode without a timestamp properly."""
@@ -103,23 +109,25 @@ def test_main_with_incremental_no_timestamp():
         args_mock.prev_file = None
         args_mock.diff_output = None
         args_mock.diff_context = 3
-        
+
         # Mock the CodeAggregator constructor
         mock_constructor = mock.Mock(return_value=mock.Mock())
-        
-        with mock.patch('promptprep.cli.parse_arguments', return_value=args_mock), \
-             mock.patch('promptprep.cli.CodeAggregator', mock_constructor), \
-             mock.patch('sys.stdout', new=StringIO()) as fake_stdout:
-            
+
+        with mock.patch(
+            "promptprep.cli.parse_arguments", return_value=args_mock
+        ), mock.patch("promptprep.cli.CodeAggregator", mock_constructor), mock.patch(
+            "sys.stdout", new=StringIO()
+        ) as fake_stdout:
             main()
-            
+
             # Verify CodeAggregator was created with incremental=True but timestamp=None
             _, kwargs = mock_constructor.call_args
             assert kwargs["incremental"] is True
             assert kwargs["last_run_timestamp"] is None
-            
+
             # Verify some output was generated
             assert "created successfully" in fake_stdout.getvalue()
+
 
 def test_incremental_with_clipboard():
     """Checks that incremental mode works with clipboard output."""
@@ -149,29 +157,35 @@ def test_incremental_with_clipboard():
         args_mock.prev_file = None
         args_mock.diff_output = None
         args_mock.diff_context = 3
-        
+
         # Mock aggregator with successful clipboard copy
         mock_aggregator = mock.Mock()
         mock_aggregator.aggregate_code.return_value = "Incremental content"
         mock_aggregator.copy_to_clipboard.return_value = True
-        
-        with mock.patch('promptprep.cli.parse_arguments', return_value=args_mock), \
-             mock.patch('promptprep.cli.CodeAggregator', return_value=mock_aggregator), \
-             mock.patch('sys.stdout', new=StringIO()) as fake_stdout:
-            
+
+        with mock.patch(
+            "promptprep.cli.parse_arguments", return_value=args_mock
+        ), mock.patch(
+            "promptprep.cli.CodeAggregator", return_value=mock_aggregator
+        ), mock.patch(
+            "sys.stdout", new=StringIO()
+        ) as fake_stdout:
             main()
-            
+
             # Verify copy_to_clipboard was called
             mock_aggregator.copy_to_clipboard.assert_called_once()
-            
+
             # Verify the output message
             assert "copied to the clipboard successfully" in fake_stdout.getvalue()
+
 
 def test_unix_timestamp_parsing():
     """Ensures we can parse Unix timestamps correctly."""
     # Test Unix timestamp as float
     unix_time = "1681574645.0"
-    with mock.patch.object(sys, 'argv', ['promptprep', '--incremental', '--last-run-timestamp', unix_time]):
+    with mock.patch.object(
+        sys, "argv", ["promptprep", "--incremental", "--last-run-timestamp", unix_time]
+    ):
         args = parse_arguments()
         assert args.incremental is True
         assert args.last_run_timestamp == float(unix_time)

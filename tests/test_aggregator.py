@@ -8,6 +8,7 @@ import platform
 
 from promptprep.aggregator import CodeAggregator, DirectoryTreeGenerator
 
+
 def run_script(args, cwd):
     """Runs our CLI script and returns its output for testing."""
     cmd = [sys.executable, "-m", "promptprep.cli"] + args
@@ -18,6 +19,7 @@ def run_script(args, cwd):
     print(f"Standard output: {result.stdout}")
     print(f"Error output: {result.stderr}")
     return result
+
 
 def test_default_output():
     """Makes sure we can create an output file using default settings."""
@@ -33,7 +35,7 @@ def test_specified_directory():
         dummy_file = os.path.join(src_dir, "dummy.py")
         with open(dummy_file, "w", encoding="utf-8") as f:
             f.write("print('hello')")
-        
+
         with tempfile.TemporaryDirectory() as work_dir:
             custom_output = "test_output.txt"
             run_script(["-d", src_dir, "-o", custom_output], cwd=work_dir)
@@ -50,7 +52,7 @@ def test_include_files():
             f.write("print('include me')")
         with open(file2, "w", encoding="utf-8") as f:
             f.write("print('ignore me')")
-        
+
         run_script(["-d", tmpdir, "-i", "include_me.py"], cwd=tmpdir)
         output_file = os.path.join(tmpdir, "full_code.txt")
         with open(output_file, "r", encoding="utf-8") as f:
@@ -68,7 +70,7 @@ def test_extensions():
             f.write("print('hello')")
         with open(txt_file, "w", encoding="utf-8") as f:
             f.write("Text content")
-        
+
         run_script(["-d", tmpdir, "-x", ".py"], cwd=tmpdir)
         output_file = os.path.join(tmpdir, "full_code.txt")
         with open(output_file, "r", encoding="utf-8") as f:
@@ -85,11 +87,10 @@ def test_exclude_dirs():
         file_in_exclude = os.path.join(exclude_dir, "dummy.py")
         with open(file_in_exclude, "w", encoding="utf-8") as f:
             f.write("print('excluded')")
-        
+
         run_script(["-d", tmpdir, "-e", "exclude_this"], cwd=tmpdir)
         output_file = os.path.join(tmpdir, "full_code.txt")
         with open(output_file, "r", encoding="utf-8") as f:
             content = f.read()
         assert "exclude_this/ [EXCLUDED]" in content
         assert "dummy.py" not in content
-
