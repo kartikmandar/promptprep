@@ -64,8 +64,7 @@ line-length = 88
 target-version = ["py310"]
 
 [tool.bumpversion]
-current_version = "0.1.2"   # Updated from 0.1.1 to 0.1.2
-commit = true
+current_version = "0.1.2"
 tag = true
 tag_name = "v{new_version}"
 
@@ -73,3 +72,8 @@ tag_name = "v{new_version}"
 filename = "pyproject.toml"
 search = 'version = "{current_version}"'
 replace = 'version = "{new_version}"'
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["promptprep*"]
+exclude = ["tests*"] 
