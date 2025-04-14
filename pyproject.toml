@@ -79,4 +79,3 @@ replace = 'version = "{new_version}"'
 # Ensure correct package discovery and case-sensitivity
 [tool.setuptools]
 packages = ["promptprep"]
-package-dir = { "" = "." } 
