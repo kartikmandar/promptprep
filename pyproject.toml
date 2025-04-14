@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "promptprep"
-version = "0.1.5"
+version = "0.1.6"
 description = "A code aggregator tool for consolidating code files into a single file with an ASCII directory tree."
 authors = [{ name = "Kartik Mandar", email = "kartik4321mandar@gmail.com" }]
 license = "MIT" # Changed from table format to SPDX expression string
@@ -67,7 +67,7 @@ line-length = 88
 target-version = ["py310"]
 
 [tool.bumpversion]
-current_version = "0.1.5"
+current_version = "0.1.6"
 tag = true
 tag_name = "v{new_version}"
 
@@ -79,4 +79,4 @@ replace = 'version = "{new_version}"'
 # Ensure correct package discovery and case-sensitivity
 [tool.setuptools]
 packages = ["promptprep"]
-package-dir = { "" = "." } # Explicitly define the package root directory
+package-dir = { "" = "." } 
