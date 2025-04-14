@@ -7,7 +7,7 @@ name = "promptprep"
 version = "0.1.5"
 description = "A code aggregator tool for consolidating code files into a single file with an ASCII directory tree."
 authors = [{ name = "Kartik Mandar", email = "kartik4321mandar@gmail.com" }]
-license = { text = "MIT" }
+license = "MIT" # Changed from table format to SPDX expression string
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = ["tqdm", "tiktoken"]
@@ -15,7 +15,7 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    # Removed the deprecated License classifier
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -76,6 +76,7 @@ filename = "pyproject.toml"
 search = 'version = "{current_version}"'
 replace = 'version = "{new_version}"'
 
-# Simplified package discovery configuration
+# Ensure correct package discovery and case-sensitivity
 [tool.setuptools]
 packages = ["promptprep"]
+package-dir = { "" = "." } # Explicitly define the package root directory
