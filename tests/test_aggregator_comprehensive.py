@@ -229,18 +229,29 @@ class TestCodeAggregator:
         
     def test_is_file_size_within_limit(self):
         """Test file size limit check."""
-        with tempfile.NamedTemporaryFile() as tmp:
+        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+            tmp_path = tmp.name
+            # File is now closed after this block
+        
+        try:
             # Write 1MB of data
-            with open(tmp.name, "wb") as f:
+            with open(tmp_path, "wb") as f:
                 f.write(b"0" * 1024 * 1024)
                 
             # Test with 2MB limit (should pass)
             aggregator = CodeAggregator(max_file_size_mb=2.0)
-            assert aggregator.is_file_size_within_limit(tmp.name) is True
+            assert aggregator.is_file_size_within_limit(tmp_path) is True
             
             # Test with 0.5MB limit (should fail)
             aggregator = CodeAggregator(max_file_size_mb=0.5)
-            assert aggregator.is_file_size_within_limit(tmp.name) is False
+            assert aggregator.is_file_size_within_limit(tmp_path) is False
+        finally:
+            # Clean up the temporary file
+            try:
+                if os.path.exists(tmp_path):
+                    os.unlink(tmp_path)
+            except (PermissionError, OSError):
+                pass  # Ignore errors on Windows
     
     @mock.patch("tiktoken.get_encoding")
     def test_count_text_tokens(self, mock_get_encoding):
