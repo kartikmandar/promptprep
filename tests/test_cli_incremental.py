@@ -65,11 +65,11 @@ def test_main_with_incremental():
         # Mock the CodeAggregator constructor
         mock_constructor = mock.Mock(return_value=mock.Mock())
 
-        with mock.patch(
-            "promptprep.cli.parse_arguments", return_value=args_mock
-        ), mock.patch("promptprep.cli.CodeAggregator", mock_constructor), mock.patch(
-            "sys.stdout", new=StringIO()
-        ) as fake_stdout:
+        with (
+            mock.patch("promptprep.cli.parse_arguments", return_value=args_mock),
+            mock.patch("promptprep.cli.CodeAggregator", mock_constructor),
+            mock.patch("sys.stdout", new=StringIO()) as fake_stdout,
+        ):
             main()
 
             # Verify CodeAggregator was created with incremental=True
@@ -113,11 +113,11 @@ def test_main_with_incremental_no_timestamp():
         # Mock the CodeAggregator constructor
         mock_constructor = mock.Mock(return_value=mock.Mock())
 
-        with mock.patch(
-            "promptprep.cli.parse_arguments", return_value=args_mock
-        ), mock.patch("promptprep.cli.CodeAggregator", mock_constructor), mock.patch(
-            "sys.stdout", new=StringIO()
-        ) as fake_stdout:
+        with (
+            mock.patch("promptprep.cli.parse_arguments", return_value=args_mock),
+            mock.patch("promptprep.cli.CodeAggregator", mock_constructor),
+            mock.patch("sys.stdout", new=StringIO()) as fake_stdout,
+        ):
             main()
 
             # Verify CodeAggregator was created with incremental=True but timestamp=None
@@ -163,13 +163,11 @@ def test_incremental_with_clipboard():
         mock_aggregator.aggregate_code.return_value = "Incremental content"
         mock_aggregator.copy_to_clipboard.return_value = True
 
-        with mock.patch(
-            "promptprep.cli.parse_arguments", return_value=args_mock
-        ), mock.patch(
-            "promptprep.cli.CodeAggregator", return_value=mock_aggregator
-        ), mock.patch(
-            "sys.stdout", new=StringIO()
-        ) as fake_stdout:
+        with (
+            mock.patch("promptprep.cli.parse_arguments", return_value=args_mock),
+            mock.patch("promptprep.cli.CodeAggregator", return_value=mock_aggregator),
+            mock.patch("sys.stdout", new=StringIO()) as fake_stdout,
+        ):
             main()
 
             # Verify copy_to_clipboard was called

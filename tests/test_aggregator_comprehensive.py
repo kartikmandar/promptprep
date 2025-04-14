@@ -287,9 +287,12 @@ class TestCodeAggregator:
         aggregator = CodeAggregator(directory="/non/existent/dir")
 
         # Mock os.path.exists to return False for our directory, triggering the error path
-        with mock.patch("os.path.exists", return_value=False), mock.patch(
-            "promptprep.aggregator.DirectoryTreeGenerator.generate",
-            return_value="Directory not found: /non/existent/dir",
+        with (
+            mock.patch("os.path.exists", return_value=False),
+            mock.patch(
+                "promptprep.aggregator.DirectoryTreeGenerator.generate",
+                return_value="Directory not found: /non/existent/dir",
+            ),
         ):
             result = aggregator.aggregate_code()
             assert "Directory not found" in result
@@ -342,12 +345,15 @@ class TestCodeAggregator:
             # Create a modified formatter that will include token_model in output
             mock_metadata = {"token_model": "cl100k_base", "token_count": 10}
 
-            with mock.patch(
-                "promptprep.aggregator.CodeAggregator.collect_metadata",
-                return_value=mock_metadata,
-            ), mock.patch(
-                "promptprep.aggregator.CodeAggregator.count_text_tokens",
-                return_value=10,
+            with (
+                mock.patch(
+                    "promptprep.aggregator.CodeAggregator.collect_metadata",
+                    return_value=mock_metadata,
+                ),
+                mock.patch(
+                    "promptprep.aggregator.CodeAggregator.count_text_tokens",
+                    return_value=10,
+                ),
             ):
                 aggregator = CodeAggregator(
                     directory=tmpdir, count_tokens=True, collect_metadata=True

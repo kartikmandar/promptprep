@@ -1,4 +1,5 @@
 """Makes your code look nice in different output formats."""
+
 from abc import ABC, abstractmethod
 import os
 from typing import Dict, Optional, List, Any

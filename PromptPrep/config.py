@@ -2,6 +2,7 @@
 
 Makes it easy to save your preferred settings and load them later.
 """
+
 import json
 import os
 import argparse

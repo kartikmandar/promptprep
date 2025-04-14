@@ -1,4 +1,5 @@
 """A friendly terminal interface for choosing which files to process."""
+
 import os
 import sys
 from typing import List, Set, Tuple, Dict, Optional
@@ -25,9 +26,9 @@ class FileSelector:
         self.current_path = self.start_path
         self.cursor_pos = 0
         self.offset = 0
-        self.selected_items: Dict[
-            str, bool
-        ] = {}  # Dictionary tracking selected items (True=include, False=exclude)
+        self.selected_items: Dict[str, bool] = (
+            {}
+        )  # Dictionary tracking selected items (True=include, False=exclude)
         self.exclude_dirs: Set[str] = set()  # Set of excluded directory paths
         self.files: List[str] = []
         self.show_hidden = False

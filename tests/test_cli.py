@@ -129,11 +129,11 @@ def test_main_with_invalid_directory():
     args_mock.last_run_timestamp = None
     args_mock.prev_file = None
 
-    with mock.patch(
-        "promptprep.cli.parse_arguments", return_value=args_mock
-    ), mock.patch("sys.stderr", new=StringIO()) as fake_err, pytest.raises(
-        SystemExit
-    ) as excinfo:
+    with (
+        mock.patch("promptprep.cli.parse_arguments", return_value=args_mock),
+        mock.patch("sys.stderr", new=StringIO()) as fake_err,
+        pytest.raises(SystemExit) as excinfo,
+    ):
         main()
         assert "Error: Directory not found" in fake_err.getvalue()
         assert excinfo.value.code == 1

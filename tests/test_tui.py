@@ -144,8 +144,9 @@ class TestFileSelector:
                 return ["mock_file"]
 
         # Mock os.listdir to simulate permission error and os.path.dirname for navigation
-        with mock.patch("os.listdir", side_effect=mock_get_contents), mock.patch(
-            "os.path.dirname", return_value=parent_path
+        with (
+            mock.patch("os.listdir", side_effect=mock_get_contents),
+            mock.patch("os.path.dirname", return_value=parent_path),
         ):
             # Call should handle the permission error and update directory
             contents = fs._get_directory_contents()

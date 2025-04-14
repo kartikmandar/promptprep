@@ -271,9 +271,10 @@ class TestFileDiffComparison:
 
     def test_compare_files_basic(self):
         """Test basic file comparison."""
-        with tempfile.NamedTemporaryFile(
-            mode="w", delete=False
-        ) as file1, tempfile.NamedTemporaryFile(mode="w", delete=False) as file2:
+        with (
+            tempfile.NamedTemporaryFile(mode="w", delete=False) as file1,
+            tempfile.NamedTemporaryFile(mode="w", delete=False) as file2,
+        ):
             # Write different content to the files
             file1.write("Line 1\nLine 2\nLine 3\n")
             file2.write("Line 1\nModified Line\nLine 3\n")
@@ -296,9 +297,10 @@ class TestFileDiffComparison:
 
     def test_compare_files_identical(self):
         """Test comparison of identical files."""
-        with tempfile.NamedTemporaryFile(
-            mode="w", delete=False
-        ) as file1, tempfile.NamedTemporaryFile(mode="w", delete=False) as file2:
+        with (
+            tempfile.NamedTemporaryFile(mode="w", delete=False) as file1,
+            tempfile.NamedTemporaryFile(mode="w", delete=False) as file2,
+        ):
             # Write the same content to both files
             content = "Line 1\nLine 2\nLine 3\n"
             file1.write(content)
@@ -320,13 +322,11 @@ class TestFileDiffComparison:
 
     def test_compare_files_with_output_file(self):
         """Test saving diff to an output file."""
-        with tempfile.NamedTemporaryFile(
-            mode="w", delete=False
-        ) as file1, tempfile.NamedTemporaryFile(
-            mode="w", delete=False
-        ) as file2, tempfile.NamedTemporaryFile(
-            mode="w", delete=False
-        ) as output_file:
+        with (
+            tempfile.NamedTemporaryFile(mode="w", delete=False) as file1,
+            tempfile.NamedTemporaryFile(mode="w", delete=False) as file2,
+            tempfile.NamedTemporaryFile(mode="w", delete=False) as output_file,
+        ):
             # Write different content to the files
             file1.write("Line 1\nLine 2\nLine 3\n")
             file2.write("Line 1\nModified Line\nLine 3\n")
@@ -356,9 +356,10 @@ class TestFileDiffComparison:
 
     def test_compare_files_context_lines(self):
         """Test diff with different numbers of context lines."""
-        with tempfile.NamedTemporaryFile(
-            mode="w", delete=False
-        ) as file1, tempfile.NamedTemporaryFile(mode="w", delete=False) as file2:
+        with (
+            tempfile.NamedTemporaryFile(mode="w", delete=False) as file1,
+            tempfile.NamedTemporaryFile(mode="w", delete=False) as file2,
+        ):
             # Create larger files with multiple changes
             file1.write("Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nLine 6\nLine 7\n")
             file2.write(

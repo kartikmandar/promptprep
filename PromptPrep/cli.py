@@ -252,9 +252,9 @@ def main() -> None:
             directory=args.directory,
             output_file=args.output_file,
             include_files=include_files,
-            programming_extensions=programming_extensions
-            if programming_extensions
-            else None,
+            programming_extensions=(
+                programming_extensions if programming_extensions else None
+            ),
             exclude_dirs=exclude_dirs if exclude_dirs else None,
             max_file_size_mb=args.max_file_size,
             summary_mode=args.summary_mode,

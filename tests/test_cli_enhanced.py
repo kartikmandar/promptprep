@@ -65,14 +65,16 @@ class TestCliEnhanced:
 
             # Mock the copy_to_clipboard method to return success
             # Mock sys.argv directly since main() doesn't take arguments
-            with mock.patch(
-                "sys.argv", ["promptprep", "--directory", tmpdir, "--clipboard"]
-            ), mock.patch(
-                "promptprep.aggregator.CodeAggregator.copy_to_clipboard",
-                return_value=True,
-            ), mock.patch(
-                "sys.stdout", new_callable=StringIO
-            ) as mock_stdout:
+            with (
+                mock.patch(
+                    "sys.argv", ["promptprep", "--directory", tmpdir, "--clipboard"]
+                ),
+                mock.patch(
+                    "promptprep.aggregator.CodeAggregator.copy_to_clipboard",
+                    return_value=True,
+                ),
+                mock.patch("sys.stdout", new_callable=StringIO) as mock_stdout,
+            ):
                 # Run the main function
                 try:
                     main()
@@ -94,16 +96,17 @@ class TestCliEnhanced:
                 f.write('print("Hello")')
 
             # Mock the copy_to_clipboard method to return failure
-            with mock.patch(
-                "sys.argv", ["promptprep", "--directory", tmpdir, "--clipboard"]
-            ), mock.patch(
-                "promptprep.aggregator.CodeAggregator.copy_to_clipboard",
-                return_value=False,
-            ), mock.patch(
-                "sys.stderr", new_callable=StringIO
-            ) as mock_stderr, mock.patch(
-                "sys.stdout", new_callable=StringIO
-            ) as mock_stdout:
+            with (
+                mock.patch(
+                    "sys.argv", ["promptprep", "--directory", tmpdir, "--clipboard"]
+                ),
+                mock.patch(
+                    "promptprep.aggregator.CodeAggregator.copy_to_clipboard",
+                    return_value=False,
+                ),
+                mock.patch("sys.stderr", new_callable=StringIO) as mock_stderr,
+                mock.patch("sys.stdout", new_callable=StringIO) as mock_stdout,
+            ):
                 # Run the main function with clipboard option
                 with pytest.raises(SystemExit) as excinfo:
                     main()
@@ -125,16 +128,17 @@ class TestCliEnhanced:
                 f.write('print("Hello")')
 
             # Mock the interactive file selection
-            with mock.patch(
-                "sys.argv", ["promptprep", "--directory", tmpdir, "--interactive"]
-            ), mock.patch(
-                "promptprep.tui.select_files_interactive",
-                return_value=({"test.py"}, set(), True),
-            ), mock.patch(
-                "promptprep.aggregator.CodeAggregator.write_to_file"
-            ), mock.patch(
-                "sys.stdout", new_callable=StringIO
-            ) as mock_stdout:
+            with (
+                mock.patch(
+                    "sys.argv", ["promptprep", "--directory", tmpdir, "--interactive"]
+                ),
+                mock.patch(
+                    "promptprep.tui.select_files_interactive",
+                    return_value=({"test.py"}, set(), True),
+                ),
+                mock.patch("promptprep.aggregator.CodeAggregator.write_to_file"),
+                mock.patch("sys.stdout", new_callable=StringIO) as mock_stdout,
+            ):
                 try:
                     # Capture actual output for debugging if the test fails
                     main()
@@ -156,14 +160,16 @@ class TestCliEnhanced:
                 f.write('print("Hello")')
 
             # Mock the interactive file selection with cancel (save=False)
-            with mock.patch(
-                "sys.argv", ["promptprep", "--directory", tmpdir, "--interactive"]
-            ), mock.patch(
-                "promptprep.tui.select_files_interactive",
-                return_value=(set(), set(), False),
-            ), mock.patch(
-                "sys.stdout", new_callable=StringIO
-            ) as mock_stdout:
+            with (
+                mock.patch(
+                    "sys.argv", ["promptprep", "--directory", tmpdir, "--interactive"]
+                ),
+                mock.patch(
+                    "promptprep.tui.select_files_interactive",
+                    return_value=(set(), set(), False),
+                ),
+                mock.patch("sys.stdout", new_callable=StringIO) as mock_stdout,
+            ):
                 # Run the main function
                 main()  # Should return normally, not exit with error
 
@@ -179,16 +185,17 @@ class TestCliEnhanced:
                 f.write('print("Hello")')
 
             # Create a mock that simulates the right type of exception
-            with mock.patch(
-                "sys.argv", ["promptprep", "--directory", tmpdir, "--interactive"]
-            ), mock.patch(
-                "promptprep.tui.select_files_interactive",
-                side_effect=Exception("Test error"),
-            ), mock.patch(
-                "sys.stdout", new_callable=StringIO
-            ), mock.patch(
-                "sys.stderr", new_callable=StringIO
-            ) as mock_stderr:
+            with (
+                mock.patch(
+                    "sys.argv", ["promptprep", "--directory", tmpdir, "--interactive"]
+                ),
+                mock.patch(
+                    "promptprep.tui.select_files_interactive",
+                    side_effect=Exception("Test error"),
+                ),
+                mock.patch("sys.stdout", new_callable=StringIO),
+                mock.patch("sys.stderr", new_callable=StringIO) as mock_stderr,
+            ):
                 # The main function may handle some exceptions internally,
                 # so we only check that execution completes without crashing
                 try:
@@ -208,15 +215,14 @@ class TestCliEnhanced:
                 f.write('print("Hello")')
 
             # Mock write_to_file to raise an IOError
-            with mock.patch(
-                "sys.argv", ["promptprep", "--directory", tmpdir]
-            ), mock.patch(
-                "promptprep.aggregator.CodeAggregator.write_to_file",
-                side_effect=IOError("Test IO error"),
-            ), mock.patch(
-                "sys.stderr", new_callable=StringIO
-            ) as mock_stderr, mock.patch(
-                "sys.stdout", new_callable=StringIO
+            with (
+                mock.patch("sys.argv", ["promptprep", "--directory", tmpdir]),
+                mock.patch(
+                    "promptprep.aggregator.CodeAggregator.write_to_file",
+                    side_effect=IOError("Test IO error"),
+                ),
+                mock.patch("sys.stderr", new_callable=StringIO) as mock_stderr,
+                mock.patch("sys.stdout", new_callable=StringIO),
             ):
                 # Run the main function
                 with pytest.raises(SystemExit) as excinfo:

@@ -82,15 +82,12 @@ def test_main_with_diff():
         mock_aggregator = mock.Mock()
         mock_aggregator.compare_files.return_value = mock_diff
 
-        with mock.patch(
-            "promptprep.cli.parse_arguments", return_value=args_mock
-        ), mock.patch(
-            "promptprep.cli.CodeAggregator", return_value=mock_aggregator
-        ), mock.patch(
-            "os.path.exists", return_value=True
-        ), mock.patch(
-            "sys.stdout", new=StringIO()
-        ) as fake_stdout:
+        with (
+            mock.patch("promptprep.cli.parse_arguments", return_value=args_mock),
+            mock.patch("promptprep.cli.CodeAggregator", return_value=mock_aggregator),
+            mock.patch("os.path.exists", return_value=True),
+            mock.patch("sys.stdout", new=StringIO()) as fake_stdout,
+        ):
             main()
 
             # Verify compare_files was called with correct arguments
@@ -148,15 +145,12 @@ def test_main_with_diff_output_file():
         mock_aggregator = mock.Mock()
         mock_aggregator.compare_files.return_value = mock_diff_message
 
-        with mock.patch(
-            "promptprep.cli.parse_arguments", return_value=args_mock
-        ), mock.patch(
-            "promptprep.cli.CodeAggregator", return_value=mock_aggregator
-        ), mock.patch(
-            "os.path.exists", return_value=True
-        ), mock.patch(
-            "sys.stdout", new=StringIO()
-        ) as fake_stdout:
+        with (
+            mock.patch("promptprep.cli.parse_arguments", return_value=args_mock),
+            mock.patch("promptprep.cli.CodeAggregator", return_value=mock_aggregator),
+            mock.patch("os.path.exists", return_value=True),
+            mock.patch("sys.stdout", new=StringIO()) as fake_stdout,
+        ):
             main()
 
             # Verify compare_files was called with correct arguments including output file
@@ -180,13 +174,12 @@ def test_main_with_diff_missing_previous_file():
     args_mock.directory = os.getcwd()
     args_mock.clipboard = False
 
-    with mock.patch(
-        "promptprep.cli.parse_arguments", return_value=args_mock
-    ), mock.patch("os.path.exists", return_value=False), mock.patch(
-        "sys.stderr", new=StringIO()
-    ) as fake_stderr, pytest.raises(
-        SystemExit
-    ) as excinfo:
+    with (
+        mock.patch("promptprep.cli.parse_arguments", return_value=args_mock),
+        mock.patch("os.path.exists", return_value=False),
+        mock.patch("sys.stderr", new=StringIO()) as fake_stderr,
+        pytest.raises(SystemExit) as excinfo,
+    ):
         main()
 
         # Verify exit code and error message
@@ -241,15 +234,12 @@ def test_main_with_diff_generate_current_file():
         # First return False (current file doesn't exist), then True after generation
         os_path_exists_returns = [True, False, True]
 
-        with mock.patch(
-            "promptprep.cli.parse_arguments", return_value=args_mock
-        ), mock.patch(
-            "promptprep.cli.CodeAggregator", return_value=mock_aggregator
-        ), mock.patch(
-            "os.path.exists", side_effect=os_path_exists_returns
-        ), mock.patch(
-            "sys.stdout", new=StringIO()
-        ) as fake_stdout:
+        with (
+            mock.patch("promptprep.cli.parse_arguments", return_value=args_mock),
+            mock.patch("promptprep.cli.CodeAggregator", return_value=mock_aggregator),
+            mock.patch("os.path.exists", side_effect=os_path_exists_returns),
+            mock.patch("sys.stdout", new=StringIO()) as fake_stdout,
+        ):
             main()
 
             # Verify write_to_file was called to generate the current file

@@ -2,6 +2,7 @@
 This file helps pytest discover the package properly.
 It's especially important in CI environments.
 """
+
 import os
 import sys
 from pathlib import Path

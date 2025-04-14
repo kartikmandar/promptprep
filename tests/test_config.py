@@ -1,4 +1,5 @@
 """Unit tests for the configuration management functionality."""
+
 import os
 import json
 import tempfile
