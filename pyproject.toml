@@ -9,11 +9,51 @@ description = "A code aggregator tool for consolidating code files into a single
 authors = [{ name = "Kartik Mandar", email = "kartik4321mandar@gmail.com" }]
 license = { file = "LICENSE" }
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.10"
 dependencies = ["tqdm", "tiktoken"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Documentation",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Utilities",
+    "Topic :: Text Processing",
+]
+keywords = [
+    "code",
+    "aggregator",
+    "prompt",
+    "llm",
+    "gpt",
+    "ai",
+    "context",
+    "cli",
+    "developer-tools",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/kartikmandar/promptprep"
+"Bug Tracker" = "https://github.com/kartikmandar/promptprep/issues"
+"Repository" = "https://github.com/kartikmandar/promptprep"
 
 [project.optional-dependencies]
 highlighting = ["pygments>=2.10.0"]
+dev = [
+    "pytest>=6.0",
+    "black>=22.0",
+    "ruff",
+    "build",
+    "twine",
+    "bump-my-version",
+]
 all = ["pygments>=2.10.0"]
 
 [project.scripts]
@@ -21,4 +61,15 @@ promptprep = "promptprep.cli:main"
 
 [tool.black]
 line-length = 88
-target-version = ["py37"]
+target-version = ["py310"]
+
+[tool.bumpversion]
+current_version = "0.1.0"
+commit = true
+tag = true
+tag_name = "v{new_version}"
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'

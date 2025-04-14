@@ -10,6 +10,14 @@ from .formatters import (
 )
 from .config import ConfigManager
 
+import importlib.metadata
+
+try:
+    __version__ = importlib.metadata.version("promptprep")
+except importlib.metadata.PackageNotFoundError:
+    # Handle case where package is not installed (e.g., running from source)
+    __version__ = "0.0.0-dev"
+
 __all__ = [
     "CodeAggregator",
     "DirectoryTreeGenerator",
