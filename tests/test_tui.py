@@ -170,12 +170,12 @@ class TestFileSelector:
         # Toggle once: should be included
         fs._toggle_selection(file_path)
         assert file_path in fs.selected_items
-        assert fs.selected_items[file_path] == True
+        assert fs.selected_items[file_path]  # Instead of == True
 
         # Toggle again: should be excluded
         fs._toggle_selection(file_path)
         assert file_path in fs.selected_items
-        assert fs.selected_items[file_path] == False
+        assert not fs.selected_items[file_path]  # Instead of == False
 
         # Toggle third time: should be removed from selections
         fs._toggle_selection(file_path)
@@ -193,13 +193,13 @@ class TestFileSelector:
         # Toggle once: should be included
         fs._toggle_selection(dir_path)
         assert dir_path in fs.selected_items
-        assert fs.selected_items[dir_path] == True
+        assert fs.selected_items[dir_path]  # Instead of == True
         assert dir_path not in fs.exclude_dirs
 
         # Toggle again: should be excluded
         fs._toggle_selection(dir_path)
         assert dir_path in fs.selected_items
-        assert fs.selected_items[dir_path] == False
+        assert not fs.selected_items[dir_path]  # Instead of == False
         assert dir_path in fs.exclude_dirs
 
         # Toggle third time: should be removed from selections and exclude_dirs
@@ -321,10 +321,7 @@ class TestFileSelector:
         fs.cursor_pos = 0  # file1.py
         fs._handle_key(ord(" "), stdscr)
         assert os.path.join(str(temp_dir_with_files), "file1.py") in fs.selected_items
-        assert (
-            fs.selected_items[os.path.join(str(temp_dir_with_files), "file1.py")]
-            == True
-        )
+        assert fs.selected_items[os.path.join(str(temp_dir_with_files), "file1.py")]  # Instead of == True
 
     def test_handle_key_toggles(self, temp_dir_with_files, mock_curses):
         """Test keys for toggling various options."""
@@ -390,7 +387,7 @@ class TestFileSelector:
         # Check results
         assert include_files == set(["file1.py"])
         assert exclude_dirs == set(["/path/to/excluded"])
-        assert save == True
+        assert save  # Instead of == True
 
     def test_select_files_interactive_exception(self, temp_dir_with_files):
         """Test exception handling in select_files_interactive."""
@@ -407,4 +404,4 @@ class TestFileSelector:
             assert "Error in interactive mode: Test error" in stderr_capture.getvalue()
             assert include_files == set()
             assert exclude_dirs == set()
-            assert save == False
+            assert not save  # Instead of == False
