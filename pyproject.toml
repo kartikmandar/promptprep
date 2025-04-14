@@ -76,6 +76,5 @@ search = 'version = "{current_version}"'
 replace = 'version = "{new_version}"'
 
 [tool.setuptools.packages.find]
-where = ["promptprep"]
 include = ["*"]
 exclude = ["tests*"]
