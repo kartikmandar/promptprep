@@ -26,11 +26,13 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install .[dev] # Install package and dev dependencies
+          # Install in editable mode to ensure tests can find the module
+          pip install -e .[dev]
 
       - name: Run tests
         run: |
-          pytest
+          # Run tests from the root directory to ensure proper package discovery
+          python -m pytest
 
   lint-format:
     runs-on: ubuntu-latest
@@ -47,7 +49,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install .[dev] # Need black, ruff, etc. from dev dependencies
+          pip install -e .[dev] # Need black, ruff, etc. from dev dependencies
 
       - name: Check formatting with Black
         run: |
