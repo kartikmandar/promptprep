@@ -321,7 +321,9 @@ class TestFileSelector:
         fs.cursor_pos = 0  # file1.py
         fs._handle_key(ord(" "), stdscr)
         assert os.path.join(str(temp_dir_with_files), "file1.py") in fs.selected_items
-        assert fs.selected_items[os.path.join(str(temp_dir_with_files), "file1.py")]  # Instead of == True
+        assert fs.selected_items[
+            os.path.join(str(temp_dir_with_files), "file1.py")
+        ]  # Instead of == True
 
     def test_handle_key_toggles(self, temp_dir_with_files, mock_curses):
         """Test keys for toggling various options."""
