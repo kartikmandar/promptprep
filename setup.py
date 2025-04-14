@@ -11,7 +11,9 @@ from setuptools import setup
 print(f"Current directory: {os.getcwd()}")
 print(f"Directory contents: {os.listdir('.')}")
 print(f"promptprep exists: {os.path.exists('promptprep')}")
-print(f"promptprep is dir: {os.path.isdir('promptprep') if os.path.exists('promptprep') else 'N/A'}")
+print(
+    f"promptprep is dir: {os.path.isdir('promptprep') if os.path.exists('promptprep') else 'N/A'}"
+)
 
 # Make sure we're in the correct directory
 if os.path.exists("promptprep") and os.path.isdir("promptprep"):
