@@ -278,7 +278,7 @@ class HtmlFormatter(BaseFormatter):
         
         for file_path, size_mb in skipped_files:
             escaped_path = file_path.replace("<", "&lt;").replace(">", "&gt;")
-            result += f"<tr><td>{escaped_path}</td><td>{size_mb:.2f} MB}</td></tr>\n"
+            result += f"<tr><td>{escaped_path}</td><td>{size_mb:.2f} MB</td></tr>\n"
         
         result += "</table>\n"
         return result
