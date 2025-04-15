@@ -114,7 +114,7 @@ pip install promptprep
 
 This will install the latest stable version of promptprep and its required dependencies.
 
-### From Conda
+### From Conda (submitted for publishing, not yet approved: Don't use for now)
 
 You can install promptprep from conda-forge:
 
