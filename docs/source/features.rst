@@ -163,4 +163,4 @@ promptprep works on:
 - macOS
 - Linux
 
-It's compatible with Python 3.7 and higher.
+It's compatible with Python 3.10 and higher.

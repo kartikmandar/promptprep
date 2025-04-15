@@ -10,7 +10,7 @@ Prerequisites
 
 Before installing promptprep, ensure you have the following:
 
-* Python 3.7 or higher
+* Python 3.10 or higher
 * pip (Python package installer)
 
 Installation Methods
