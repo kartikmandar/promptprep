@@ -12,6 +12,11 @@ Before installing promptprep, ensure you have the following:
 
 * Python 3.10 or higher
 * pip (Python package installer)
+or 
+* For Homebrew: macOS operating system
+or 
+* For Conda: Anaconda or Miniconda installed
+
 
 Installation Methods
 -------------------
@@ -26,6 +31,28 @@ The easiest way to install promptprep is from PyPI using pip:
    pip install promptprep
 
 This will install the latest stable version of promptprep and its required dependencies.
+
+
+From Homebrew (macOS)
+~~~~~~~~~~~~~~~~~~~~~
+
+If you are on macOS, you can install promptprep using Homebrew. This method uses a custom "tap" repository.
+
+1. **Tap the Custom Repository:**
+   First, you need to tell Homebrew where to find the promptprep formula by "tapping" the repository. You only need to do this once:
+
+   .. code-block:: bash
+
+      brew tap kartikmandar/promptprep
+
+2. **Install promptprep:**
+   Once the tap is added, you can install promptprep like any other Homebrew package:
+
+   .. code-block:: bash
+
+      brew install promptprep
+
+Homebrew will handle installing Python 3.10+ if it's not already available and manage the dependencies within an isolated environment.
 
 From Source
 ~~~~~~~~~~~

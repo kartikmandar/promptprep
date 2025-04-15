@@ -14,6 +14,7 @@ Table of Contents
     - [Prerequisites](#prerequisites)
     - [From PyPI (Recommended)](#from-pypi-recommended)
     - [From Conda](#from-conda)
+    - [From HomeBrew (MacOS)](#from-homebrew-macos)
     - [From Source](#from-source)
     - [Optional Dependencies](#optional-dependencies)
   - [Usage](#usage)
@@ -132,6 +133,21 @@ For all optional features:
 ```bash
 conda install -c conda-forge promptprep-all
 ```
+
+### From HomeBrew (MacOS)
+
+If you are on macOS, you can install promptprep using Homebrew:
+
+1. Tap the custom repository (only needs to be done once):
+```bash
+brew tap kartikmandar/promptprep
+```
+2. Install promptprep:
+```bash
+brew install promptprep
+```
+
+
 
 ### From Source
 
