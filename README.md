@@ -13,6 +13,7 @@ Table of Contents
   - [Installation](#installation)
     - [Prerequisites](#prerequisites)
     - [From PyPI (Recommended)](#from-pypi-recommended)
+    - [From Conda](#from-conda)
     - [From Source](#from-source)
     - [Optional Dependencies](#optional-dependencies)
   - [Usage](#usage)
@@ -111,6 +112,26 @@ pip install promptprep
 ```
 
 This will install the latest stable version of promptprep and its required dependencies.
+
+### From Conda
+
+You can install promptprep from conda-forge:
+
+```bash
+conda install -c conda-forge promptprep
+```
+
+For syntax highlighting features:
+
+```bash
+conda install -c conda-forge promptprep-highlighting
+```
+
+For all optional features:
+
+```bash
+conda install -c conda-forge promptprep-all
+```
 
 ### From Source
 

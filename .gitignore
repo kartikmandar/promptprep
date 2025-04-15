@@ -25,3 +25,4 @@ htmlcov/
 *.template
 /docs/build/
 *.log
+CONDA_FORGE_SUBMISSION.md
