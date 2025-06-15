@@ -17,21 +17,16 @@ def run_script(args, cwd):
     env["PYTHONPATH"] = project_root
 
     cmd = [sys.executable, cli_script] + args
-    print(f"Running command: {' '.join(cmd)}")
-    print(f"Working directory: {cwd}")
-    print(f"PYTHONPATH: {env['PYTHONPATH']}")
 
     result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, env=env)
-    print(f"Exit code: {result.returncode}")
-    print(f"Standard output: {result.stdout}")
-    print(f"Error output: {result.stderr}")
     return result
 
 
 def test_default_output():
     """Makes sure we can create an output file using default settings."""
     with tempfile.TemporaryDirectory() as tmpdir:
-        run_script(["-d", tmpdir], cwd=tmpdir)
+        result = run_script(["-d", tmpdir], cwd=tmpdir)
+        assert result.returncode == 0
         output_file = os.path.join(tmpdir, "full_code.txt")
         assert os.path.exists(output_file)
 
@@ -45,7 +40,8 @@ def test_specified_directory():
 
         with tempfile.TemporaryDirectory() as work_dir:
             custom_output = "test_output.txt"
-            run_script(["-d", src_dir, "-o", custom_output], cwd=work_dir)
+            result = run_script(["-d", src_dir, "-o", custom_output], cwd=work_dir)
+            assert result.returncode == 0
             output_file = os.path.join(work_dir, custom_output)
             assert os.path.exists(output_file)
 
@@ -60,7 +56,8 @@ def test_include_files():
         with open(file2, "w", encoding="utf-8") as f:
             f.write("print('ignore me')")
 
-        run_script(["-d", tmpdir, "-i", "include_me.py"], cwd=tmpdir)
+        result = run_script(["-d", tmpdir, "-i", "include_me.py"], cwd=tmpdir)
+        assert result.returncode == 0
         output_file = os.path.join(tmpdir, "full_code.txt")
         with open(output_file, "r", encoding="utf-8") as f:
             content = f.read()
@@ -78,7 +75,8 @@ def test_extensions():
         with open(txt_file, "w", encoding="utf-8") as f:
             f.write("Text content")
 
-        run_script(["-d", tmpdir, "-x", ".py"], cwd=tmpdir)
+        result = run_script(["-d", tmpdir, "-x", ".py"], cwd=tmpdir)
+        assert result.returncode == 0
         output_file = os.path.join(tmpdir, "full_code.txt")
         with open(output_file, "r", encoding="utf-8") as f:
             content = f.read()
@@ -95,7 +93,8 @@ def test_exclude_dirs():
         with open(file_in_exclude, "w", encoding="utf-8") as f:
             f.write("print('excluded')")
 
-        run_script(["-d", tmpdir, "-e", "exclude_this"], cwd=tmpdir)
+        result = run_script(["-d", tmpdir, "-e", "exclude_this"], cwd=tmpdir)
+        assert result.returncode == 0
         output_file = os.path.join(tmpdir, "full_code.txt")
         with open(output_file, "r", encoding="utf-8") as f:
             content = f.read()
