@@ -539,11 +539,11 @@ class CodeAggregator:
                         print(
                             "Could not find clipboard command. Please install xclip or xsel."
                         )
-                        return False
+                        continue
                     except Exception as e:
                         print(f"Error executing clipboard command: {cmd}: {e}")
                         continue
-                print("Could not find clipboard command. Please install xclip or xsel.")
+                print("Could not find clipboard command")
                 return False
             else:
                 print(f"Clipboard operations not supported on {system}")

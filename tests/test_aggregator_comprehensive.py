@@ -562,64 +562,28 @@ class TestClass:
     @mock.patch("platform.system")
     @mock.patch("subprocess.Popen")
     def test_copy_to_clipboard_linux_fallback(self, mock_popen, mock_system):
-        """Test copying to clipboard on Linux with xclip not available."""
-        # Skip the Linux-specific assertions when running on non-Linux platforms
-        actual_platform = platform.system()
-        if actual_platform != "Linux":
-            # Force the test to think we're on Linux
-            mock_system.return_value = "Linux"
-
-            # Create a successful process mock for the second call
-            process_mock = mock.Mock()
-
-            # Setup the side effect that the first call (xclip) raises FileNotFoundError
-            # but the second call (xsel) returns our successful process mock
-            mock_popen.side_effect = [FileNotFoundError(), process_mock]
-
-            # Run the function we're testing
-            aggregator = CodeAggregator()
-            with mock.patch("builtins.print"):  # Suppress print statements
-                result = aggregator.copy_to_clipboard("Test content")
-
-                # On non-Linux platforms, we'll just verify that:
-                # 1. The system check was called at least once
-                assert mock_system.call_count >= 1
-                # 2. We attempted to call Popen at least once
-                assert mock_popen.call_count >= 1
-
-            # Always return True since we're not actually testing the result
-            # on non-Linux platforms
-            return
-
-        # This section only runs when the test is executed on Linux
+        """Test that xsel is attempted if xclip is missing on Linux."""
         mock_system.return_value = "Linux"
 
-        # Create a successful process mock for the second call
+        # Successful process for the second call
         process_mock = mock.Mock()
 
-        # Setup the side effect that the first call (xclip) raises FileNotFoundError
-        # but the second call (xsel) returns our successful process mock
+        # First call raises FileNotFoundError (xclip missing), second succeeds
         mock_popen.side_effect = [FileNotFoundError(), process_mock]
 
-        # Run the function we're testing
         aggregator = CodeAggregator()
-        with mock.patch("builtins.print"):  # Suppress print statements
+        with mock.patch("builtins.print"):
             result = aggregator.copy_to_clipboard("Test content")
 
-            # Check that the function called Popen twice
-            assert mock_popen.call_count == 2
-            mock_popen.assert_any_call(
-                "xclip -selection clipboard".split(), stdin=subprocess.PIPE
-            )
-            mock_popen.assert_any_call("xsel -ib".split(), stdin=subprocess.PIPE)
-
-            # Check that our mock process had communicate() called
-            process_mock.communicate.assert_called_once_with(
-                "Test content".encode("utf-8")
-            )
-
-            # Check that we got success
-            assert result is True
+        assert mock_popen.call_count == 2
+        mock_popen.assert_any_call(
+            "xclip -selection clipboard".split(), stdin=subprocess.PIPE
+        )
+        mock_popen.assert_any_call("xsel -ib".split(), stdin=subprocess.PIPE)
+        process_mock.communicate.assert_called_once_with(
+            "Test content".encode("utf-8")
+        )
+        assert result is True
 
     @mock.patch("platform.system")
     def test_copy_to_clipboard_unsupported(self, mock_system):
