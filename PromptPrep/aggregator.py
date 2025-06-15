@@ -133,7 +133,7 @@ class CodeAggregator:
         ".md",
         ".rst",
         # Build & Make Systems
-        ".Makefile",
+        "Makefile",
         ".gradle",
         ".cmake",
         ".ninja",
