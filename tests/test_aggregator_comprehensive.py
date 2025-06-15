@@ -2,7 +2,7 @@ import os
 import tempfile
 import pytest
 from unittest import mock
-import platform
+import sys
 import subprocess
 
 from promptprep.aggregator import DirectoryTreeGenerator, CodeAggregator
@@ -564,7 +564,7 @@ class TestClass:
     def test_copy_to_clipboard_linux_fallback(self, mock_popen, mock_system):
         """Test copying to clipboard on Linux with xclip not available."""
         # Skip the Linux-specific assertions when running on non-Linux platforms
-        actual_platform = platform.system()
+        actual_platform = sys.platform
         if actual_platform != "Linux":
             # Force the test to think we're on Linux
             mock_system.return_value = "Linux"
