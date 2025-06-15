@@ -536,14 +536,12 @@ class CodeAggregator:
                         process.communicate(content.encode("utf-8"))
                         return True
                     except FileNotFoundError:
-                        print(
-                            "Could not find clipboard command. Please install xclip or xsel."
-                        )
+                        # Try next clipboard utility if current one is missing
                         continue
                     except Exception as e:
                         print(f"Error executing clipboard command: {cmd}: {e}")
                         continue
-                print("Could not find clipboard command")
+                print("Could not find clipboard command. Please install xclip or xsel.")
                 return False
             else:
                 print(f"Clipboard operations not supported on {system}")

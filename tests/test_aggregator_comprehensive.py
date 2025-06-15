@@ -580,9 +580,7 @@ class TestClass:
             "xclip -selection clipboard".split(), stdin=subprocess.PIPE
         )
         mock_popen.assert_any_call("xsel -ib".split(), stdin=subprocess.PIPE)
-        process_mock.communicate.assert_called_once_with(
-            "Test content".encode("utf-8")
-        )
+        process_mock.communicate.assert_called_once_with("Test content".encode("utf-8"))
         assert result is True
 
     @mock.patch("platform.system")
