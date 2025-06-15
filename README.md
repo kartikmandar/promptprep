@@ -346,9 +346,6 @@ Typing long paths is no fun. The interactive Terminal User Interface lets you br
 
 Sometimes you just want the big picture. Summary mode gives you just function and class definitions along with their docstrings - perfect for understanding a codebase's structure without diving into implementation details.
 
-### Incremental Processing
-
-Why reprocess everything when only a few files changed? With `--incremental` and a timestamp, PromptPrep only processes files that have been modified since your last run. This is a huge timesaver for big projects!
 
 ### Diff Generation
 
